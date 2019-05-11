@@ -49,6 +49,8 @@ class Prod_order(models.Model):
 class Customers(models.Model):
     custFName = models.CharField(null=True, max_length=50)
     custLName = models.CharField(null = True, max_length=50)
+    username = models.CharField(max_length=30)
+    password = models.CharField(max_length=30)
     custAddress = models.CharField(max_length = 80)
     custCity = models.CharField(max_length = 50)
     custState = models.CharField(max_length = 2)
@@ -105,3 +107,10 @@ class Order(models.Model):
     shippingMethod = models.ForeignKey(ShippingMethod, on_delete=models.CASCADE)
     shippingAddress = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
     product = models.ManyToManyField(Products, through='Prod_order')
+
+
+class Seller(models.Model):
+    username = models.CharField(max_length=30)
+    password = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
