@@ -1,6 +1,7 @@
 from django.db import models
 import datetime
 import sys
+from django.contrib.auth.models import User
 
 class Discount(models.Model):
     percentage = models.DecimalField(default=0.00, max_digits=3, decimal_places=2)
@@ -50,17 +51,16 @@ class Prod_dis(models.Model):
     discount = models.ForeignKey(Discount, on_delete=models.CASCADE)
 
 class Customers(models.Model):
+    user = models.OneToOneField(User, default = 1, on_delete=models.CASCADE)
     custFName = models.CharField(null=True, max_length=50)
     custLName = models.CharField(null = True, max_length=50)
-    username = models.CharField(max_length=30)
-    password = models.CharField(max_length=30)
     custAddress = models.CharField(max_length = 80)
     custCity = models.CharField(max_length = 50)
     custState = models.CharField(max_length = 2)
     custZip = models.IntegerField()
     custPhone = models.CharField(max_length = 20)
     businessName = models.CharField(null = True, max_length=50)
-    PaymentID = models.ForeignKey(Payment, on_delete=models.CASCADE)
+    PaymentID = models.ForeignKey(Payment, null=True, on_delete=models.CASCADE)
 
 class ShippingAddress(models.Model):
     custID = models.ForeignKey(Customers, on_delete=models.CASCADE)
