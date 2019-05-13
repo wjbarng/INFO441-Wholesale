@@ -34,12 +34,12 @@ class Category(models.Model):
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField()
+    image = models.ImageField(null=True)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField()
+    image = models.ImageField(null=True)
     price = models.DecimalField(default=0.00, max_digits=10, decimal_places=2)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
