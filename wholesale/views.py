@@ -72,8 +72,15 @@ def Category__detail_view(request, category_id):
                                         content_type = 'application/json')
         except:
             return HttpResponse('Update failed', status=status.HTTP_400_BAD_REQUEST)
+    elif (request.method = "DELETE"):
+        category_info = Category.objects.filter(id = category_id)
+        try:
+            category_info_values = category.get()
+        except:
+            return HttpResponse("category does not exist", safe=False, status = status.HTTP_404_NOT_FOUND)
+        category_info.delete()
     else:
-        
+        return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
 @csrf_exempt
 def Discount_view(request):
@@ -81,11 +88,28 @@ def Discount_view(request):
         all_discounts = list(Discount.objects.all().values())
         return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
-
-    elif (request.method == "DELETE"):
-
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except:
+            return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            new_discount = Discount(
+                percentage = data['percentage'],
+                minQuan = data['minQuan'],
+                maxQuan = data['maxQuan'],
+                disShipping = data['disShipping']
+            )
+            new_discount.save()
+        except:
+            return HttpResponse("could not save into the database", safe=False, status = status.HTTP_404_NOT_FOUND)
+        return JsonResponse(data, safe=False, status=status.HTTP_201_CREATED, 
+                                        content_type='application/json')
     else:
+        return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
+@csrf_exempt
+def Discount_view(request):
+    id ()
 
 @csrf_exempt
 def Product_view(request):
@@ -107,8 +131,7 @@ def Product_view(request):
                                         price = data['price'],
                                         category = data['category'],
                                         max_quantity = data['max_quantity'],
-                                        min_quantity = data['min_quantity'],
-                                        discount = data['discount'])
+                                        min_quantity = data['min_quantity'])
                 new_prodcut.save()
             except:
                 return HttpResponse('could not save to the database', 
@@ -121,8 +144,7 @@ def Product_view(request):
                 price = data['price'],
                 category = data['category'],
                 max_quantity = data['max_quantity'],
-                min_quantity = data['min_quantity'],
-                discount = data['discount']
+                min_quantity = data['min_quantity']
             }
             return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
         except:
