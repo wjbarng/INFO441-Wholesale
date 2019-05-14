@@ -63,7 +63,6 @@ def product_regi(request):
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
-            print(clean_data)
             try:
                 try:
                     # connecting foerign key with Category
@@ -111,7 +110,6 @@ def support(request):
 """ Post a new business application or delete an application by business name """
 """ Stanley worked on this function"""
 @csrf_exempt
-@api_view(['GET', 'POST', 'DELETE'])
 def application(request):
     if request.method == 'GET':
         return render(request, 'application.html', {'form': BusinessApplicationForm})
@@ -150,7 +148,6 @@ def application(request):
 """ Creates new address for shipping or deletes address associated with user """
 """ Stanley worked on this function"""
 @csrf_exempt
-@api_view(['GET', 'POST', 'DELETE'])
 def shipping(request):
     if request.method == 'GET':
         return render(request, 'account.html', {'shippingForm': ShippingAddressForm})
@@ -175,7 +172,7 @@ def shipping(request):
                 messages.error(request,('Address form not valid'))
                 return redirect('account')
         else:
-            return Response(status = status.HTTP_403_FORBIDDEN)
+            return HttpResponse(status = status.HTTP_403_FORBIDDEN)
     elif request.method == "DELETE":
         if request.user.is_authenticated:
             u = User.objects.get(id = request.user.id)
@@ -187,7 +184,7 @@ def shipping(request):
             else:
                 return HttpResponse("Addresses not found", status = status.HTTP_404_NOT_FOUND)
         else:
-            return Response(status = status.HTTP_403_FORBIDDEN)
+            return HttpResponse(status = status.HTTP_403_FORBIDDEN)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
@@ -198,13 +195,11 @@ def shipping(request):
 """ Update and create new account information """
 """ Stanley worked on this function"""
 @csrf_exempt
-@api_view(['GET', 'POST', 'PATCH'])
 def account(request):
     """ Update and create new account information """
     if request.method == 'PATCH':
         if request.user.is_authenticated:
             """ Update password for user """
-            print('authenticated')
             try:
                 data = json.loads(request.body.decode('utf-8'))
             except:
@@ -215,7 +210,6 @@ def account(request):
             messages.success(request,('Password updated'))
             return redirect('account')
         else:
-            print('forbidden')
             return Response(status = status.HTTP_403_FORBIDDEN)
     elif request.method == 'GET':
         return render(request, "account.html", {'shippingForm': ShippingAddressForm})
