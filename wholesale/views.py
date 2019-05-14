@@ -3,8 +3,21 @@ from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm
 from django.contrib.auth.models import User
 from wholesale.models import Customers, Payment, ShippingAddress
-from django.contrib import messages
+from .models import Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
 from django.contrib.auth import authenticate, login, logout
+
+# Create your views here.
+from rest_framework import viewsets
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.models import User
+
+import json
+import datetime
 
 def homepage(request):
 	return render(request, "index.html", {})
@@ -86,7 +99,8 @@ def signin(request):
             return redirect('signin')
     elif request.method == "GET":
         return render(request, "signin.html", {})
-			
+
+
 def signout(request):
     logout(request)
     messages.success(request,('You have been logged out'))
@@ -94,9 +108,11 @@ def signout(request):
 
 
 
-""" Registers a new individual user on post, deletes user on delete,
-    and gets the register form on get """
+
+@csrf_exempt
 def register(request):
+    """ Registers a new individual user on post, deletes user on delete,
+    and gets the register form on get """
     if request.method == "POST":
         form = RegistrationForm(request.POST)
         if form.is_valid():
@@ -123,23 +139,6 @@ def register(request):
     elif request.method == "GET":
         return render(request, "register.html", {'form': RegistrationForm})
 
-<<<<<<< HEAD
-# Create your views here.
-from rest_framework import viewsets
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-# from rest_framework.decorators import api_view
-from rest_framework import status
-from django.views.decorators.csrf import csrf_exempt
-
-from .models import Category, Discount, Payment, ShippingMethod, Products, Prod_dis, Customers, ShippingAddress, Order, Prod_order, Seller
-from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.models import User
-
-import json
-import datetime
-
 @csrf_exempt
 def Category_view(request):
     if (request.method == "GET"):
@@ -151,7 +150,7 @@ def Category_view(request):
             if ('description' not in data.keys()):
                 data['description'] = ""
             if ('image' not in data.keys()):
-                data['image'] = null
+                data['image'] = None
             try:
                 new_category = Category(name = data['name'],
                                         description = data['description'],
@@ -167,42 +166,44 @@ def Category_view(request):
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
 @csrf_exempt
-def Category__detail_view(request, category_id):
+def Category_detail_view(request, category_id):
     if (request.method == "GET"):
         try:
-            category_info = list(Category.objects.all().values().filter(id = category_id)))[0]
+            category_info = Category.objects.all().values().get(id = category_id)
         except:
             return HttpResponse("category does not exist", status = status.HTTP_404_NOT_FOUND)
         return JsonResponse(category_info, safe=False, status = status.HTTP_200_OK, 
                                 content_type = 'application/json')
     elif (request.method == "PATCH"):
         try:
-            category_info = Category.objects.filter(id = category_id))
+            category_info = Category.objects.filter(id = category_id)
             category_info_values = category_info.get()
         except:
             return HttpResponse("category does not exist", status = status.HTTP_404_NOT_FOUND)
         try:
             data = json.loads(request.body.decode('utf-8'))
+            if ('name' in data.keys()):
+                category_info_values.name = data['name']
             if ('description' in data.keys()):
-                category_info_values.description = data["description"]
-            if ('image' in data.keys()):
-                category_info_values.image = data["image"]
+                category_info_values.description = data['description']
+            if ('name' in data.keys()):
+                category_info_values.image = data['image']
         except:
             return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
         try:
             category_info_values.save()
-            updated_category_info = list(category_info.values())[0]
+            updated_category_info = list(category_info.values())
             return JsonResponse(updated_category_info, safe=False, status = status.HTTP_201_CREATED, 
                                         content_type = 'application/json')
         except:
             return HttpResponse('Update failed', status=status.HTTP_400_BAD_REQUEST)
-    elif (request.method = "DELETE"):
-        category_info = Category.objects.filter(id = category_id)
-        try:
-            category_info_values = category.get()
-        except:
-            return HttpResponse("category does not exist", safe=False, status = status.HTTP_404_NOT_FOUND)
-        category_info.delete()
+    elif (request.method == "DELETE"):
+        category = Category.objects.filter(id = category_id)
+        if (category.exists()):
+            category.delete()
+            return HttpResponse('The data is successfully deleted', status = status.HTTP_200_OK)
+        else:
+            return HttpResponse("category does not exist", status = status.HTTP_404_NOT_FOUND)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
@@ -214,26 +215,27 @@ def Discount_view(request):
     elif (request.method == "POST"):
         try:
             data = json.loads(request.body.decode('utf-8'))
-        except:
-            return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
-        try:
+            print(data)
+            if (data['minQuan'] >= data['maxQuan']):
+                HttpResponse("minQuan cannot be larger than maxQuan", safe=False, status = status.HTTP_404_NOT_FOUND)
+            print(data)
             new_discount = Discount(
                 percentage = data['percentage'],
                 minQuan = data['minQuan'],
                 maxQuan = data['maxQuan'],
                 disShipping = data['disShipping']
             )
+        except:
+            return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
+        try:
             new_discount.save()
         except:
-            return HttpResponse("could not save into the database", safe=False, status = status.HTTP_404_NOT_FOUND)
+            return HttpResponse("could not save into the database", status = status.HTTP_404_NOT_FOUND)
         return JsonResponse(data, safe=False, status=status.HTTP_201_CREATED, 
                                         content_type='application/json')
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
-@csrf_exempt
-def Discount_view(request):
-    id ()
 
 @csrf_exempt
 def Product_view(request):
@@ -262,30 +264,59 @@ def Product_view(request):
                             status=status.HTTP_400_BAD_REQUEST)
             # get discount info
             post_product = {
-                name = data['name'],
-                description = data['description'],
-                image = data['image'],
-                price = data['price'],
-                category = data['category'],
-                max_quantity = data['max_quantity'],
-                min_quantity = data['min_quantity']
+                'name':data['name'],
+                'description':data['description'],
+                'image':data['image'],
+                'price':data['price'],
+                'category':data['category'],
+                'max_quantity':data['max_quantity'],
+                'min_quantity':data['min_quantity']
             }
-            return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
+            return JsonResponse(post_product, safe=False, status=status.HTTP_200_OK)
         except:
             return HttpResponse('json encoding failed', 
                             status=status.HTTP_400_BAD_REQUEST)
-            
+    elif (request.method == "DELETE"):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            product_id = data['id']
+        except:
+            return HttpResponse('Json encode error', status = status.HTTP_400_BAD_REQUEST)
+        try:
+            product_info = Products.objects.filter(id = product_id)
+            product_info_value = product_info.get()
+        except:
+            return HttpResponse('prodcut does not exist', status = status.HTTP_404_NOT_FOUND)
+        try:
+            user_channel_info_value.delete()
+        except:
+            return(HttpResponse('The user does not exist', safe=False,
+                                 status = status.HTTP_404_NOT_FOUND))
+        return HttpResponse('The data is successfully deleted', status = status.HTTP_200_OK)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
 def Product_detail_view(request, product_id):
     if (request.method == "GET"):
-
-    elif (request.method = "PATCH"):
-
-    elif (request.method == "DELETE"):
-
+        try:
+            product_detail = list(Products.objects.all().values().filter(id = product_id))
+        except:
+            return HttpResponse("product does not exist", status = status.HTTP_404_NOT_FOUND)
+        return JsonResponse(product_detail, safe=False, status = status.HTTP_200_OK, 
+                                content_type = 'application/json')
+    elif (request.method == "PATCH"):
+        try:
+            product_detail = Products.objects.get(id = product_id)
+            product_detail_value = product_detail.get()
+        except:
+            return HttpResponse('product does not exists', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            for key in data.keys():
+                product_detail_value[key] = data[key]
+            return JsonResponse(list(product_detail.values)[0], safe=False, status = status.HTTP_201_CREATED, 
+                                        content_type = 'application/json')
+        except:
+            return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
-=======
->>>>>>> origin/stanley-1
