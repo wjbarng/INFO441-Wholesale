@@ -66,10 +66,19 @@ Endpoints
     * min_quantity_retail = min quantity that one retailer should buy
     returns the updated JSON data
 
+View pages
+1. products/<product_id> (try 26)
+  * Show the product information
+2. products/register
+  * Form that 'admin' users can register the project
+  * Buyers are not authenticated
+
+
+
 #Database
-The database contains individual tables like Seller to record admin information and 
+The database contains individual tables like Seller to record admin information and
 BusinessApplication to store applications for businesses that want to be members of
-our wholesale store. In addition, the Customers database is linked one to one with the 
+our wholesale store. In addition, the Customers database is linked one to one with the
 Django user database to keep track of individual members of the wholesale store. Each
 customer can be linked to a payment method table. A shipping address table and order table
 is linked by a foreign key to the customer table. Each order is linked by a foreign key to
@@ -77,9 +86,9 @@ a shipping method table.
 
 1. application/
 * Post: If given a valid form, a new application is saved in model BusinessApplication
-        , a success message is shown, and user is redirected to the home page. If form 
+        , a success message is shown, and user is redirected to the home page. If form
         is not valid, an error message is shown and user remains on application page. Anyone
-        can use the route. The field business name, address, zip, city, state, email, and 
+        can use the route. The field business name, address, zip, city, state, email, and
         phone are saved in the model.
 * Delete: Given a json object with a business name field, the application with the given business name
           is deleted from the BusinessApplication model. Responds with a HttpResponse of delete successful

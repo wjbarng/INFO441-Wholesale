@@ -35,6 +35,7 @@ def products(request):
 
 @csrf_exempt
 def product_detail(request, product_id):
+    """ This is a view page for the product detail """
     if (request.method == "GET"):
         try:
             product = Products.objects.all().filter(id = product_id).values()[0]
@@ -108,7 +109,7 @@ def support(request):
      
 
 """ Post a new business application or delete an application by business name """
-""" Stanley worked on this function"""
+""" Stanley worked on this function, app did not work when I removed this function"""
 @csrf_exempt
 def application(request):
     if request.method == 'GET':
@@ -146,7 +147,7 @@ def application(request):
 
 
 """ Creates new address for shipping or deletes address associated with user """
-""" Stanley worked on this function"""
+""" Stanley worked on this function, App does not work without this function"""
 @csrf_exempt
 def shipping(request):
     if request.method == 'GET':
@@ -193,7 +194,7 @@ def shipping(request):
     
 
 """ Update and create new account information """
-""" Stanley worked on this function"""
+""" Stanley worked on this function, app does not work without this function"""
 @csrf_exempt
 def account(request):
     """ Update and create new account information """
@@ -227,7 +228,6 @@ def account(request):
             customer = u.customers
             customer.PaymentId = payment
             customer.save()
-
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
         else:
@@ -303,7 +303,7 @@ def register(request):
 
 @csrf_exempt
 def Category_view(request):
-    """ This view is an API for the categories"""
+    """ This view is an API for the categories, see readme for documentation"""
     if (request.method == "GET"):
         all_category = list(Category.objects.all().values())
         return JsonResponse(all_category, safe=False, status=status.HTTP_200_OK)
@@ -339,7 +339,7 @@ def Category_view(request):
 
 @csrf_exempt
 def Category_detail_view(request, category_id):
-    """ This view is an API for the category detail"""
+    """ This view is an API for the category detail, see readme for more information"""
     if (request.method == "GET"):
         try:
             category_info = Category.objects.all().values().get(id = category_id)
@@ -400,7 +400,7 @@ def Category_detail_view(request, category_id):
 
 @csrf_exempt
 def Discount_view(request):
-    """ This view is an API for the discounts"""
+    """ This view is an API for the discounts, see readme for more information"""
     if (request.method == "GET"):
         all_discounts = list(Discount.objects.all().values())
         return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
@@ -415,7 +415,8 @@ def Discount_view(request):
             # get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if (data['minQuan'] > data['maxQuan']):
-                HttpResponse("minQuan cannot be larger than maxQuan", safe=False, status = status.HTTP_404_NOT_FOUND)
+                HttpResponse("minQuan cannot be larger than maxQuan", 
+                            safe=False, status = status.HTTP_404_NOT_FOUND)
             new_discount = Discount(percentage = data['percentage'],
                                     minQuan = data['minQuan'],
                                     maxQuan = data['maxQuan'],
@@ -448,7 +449,8 @@ def Discount_view(request):
             if ('disShipping' in data.keys()):
                 discount.disShipping = data['disShipping']
             if (discount.minQuan > discount.maxQuan):
-                return HttpResponse('minQuan cannot be larger than maxQuan', status=status.HTTP_400_BAD_REQUEST)
+                return HttpResponse('minQuan cannot be larger than maxQuan', 
+                        status=status.HTTP_400_BAD_REQUEST)
             try:
                 discount.save()
             except:
@@ -464,7 +466,7 @@ def Discount_view(request):
 
 @csrf_exempt
 def Product_view(request):
-    """ THis view is an API for products"""
+    """ THis view is an API for products, see documentation for more detail"""
     if (request.method == "GET"):
         all_products = list(Products.objects.all().values())
         # change the category id to category
