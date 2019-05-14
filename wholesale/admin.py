@@ -14,8 +14,4 @@ admin.site.register(ShippingAddress)
 admin.site.register(ShippingMethod)
 admin.site.register(Order)
 # admin.site.register(Seller)
-<<<<<<< HEAD
 # admin.site.register(BusinessApplication)
-=======
-admin.site.register(BusinessApplication)
->>>>>>> 31cc975273a9fc88b9b9c0a9112061821475ec58
