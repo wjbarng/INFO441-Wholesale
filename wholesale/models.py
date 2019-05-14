@@ -4,10 +4,10 @@ import sys
 from django.contrib.auth.models import User
 
 class Discount(models.Model):
-    percentage = models.DecimalField(default=0.00, max_digits=3, decimal_places=2)
+    percentage = models.FloatField(default=0.00)
     minQuan = models.IntegerField(default=0)
     maxQuan = models.IntegerField(default=sys.maxsize)
-    disShipping = models.DecimalField(default=0.00, max_digits=3, decimal_places=2)
+    disShipping = models.FloatField(default=0.00)
 
 class Payment(models.Model):
     CardNumber = models.IntegerField()
@@ -34,13 +34,13 @@ class Category(models.Model):
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField()
+    #image = models.ImageField(null=True)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField()
-    price = models.DecimalField(default=0.00, max_digits=10, decimal_places=2)
+    #image = models.ImageField(null=True)
+    price = models.FloatField(default=0.00)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
     min_quantity_retail = models.IntegerField(default=0)
