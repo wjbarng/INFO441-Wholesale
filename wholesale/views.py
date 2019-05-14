@@ -20,21 +20,47 @@ from decimal import Decimal
 import json
 import datetime
 
+@csrf_exempt
 def homepage(request):
 	return render(request, "index.html", {})
 
+@csrf_exempt
 def products(request):
-    return render(request, "products.html", {})
+    if (request.method == "GET"):
+        return render(request, "products.html", {})
 
+@csrf_exempt
+def product_detail(request, product_id):
+    if (request.method == "GET"):
+        try:
+            product = Products.objects.all().filter(id = product_id).values()[0]
+        except:
+            return HttpResponse("Product does not exists.", status=404)
+        try:
+            category = Category.objects.all().filter(id = product['category_id']).values()[0]
+
+        except:
+            return HttpResponse("Category does not exists.", status=404)
+        print(product)
+        print(category)
+        return HttpResponse(render(request, "productDetail.html", 
+			{'product':product, 'category':category}), status=200)
+    else:
+        return HttpResponse("Method not allowed on /product/id.", status=405)
+
+@csrf_exempt
 def wholesale(request):
     return render(request, "wholesale.html", {})
 
+@csrf_exempt
 def about(request):
     return render(request, "about.html", {})
 
+@csrf_exempt
 def support(request):
     return render(request, "support.html", {})
 
+@csrf_exempt
 def shipping(request):
     if request.method == 'GET':
         return render(request, 'account.html', {'shippingForm': ShippingAddressForm})
@@ -54,10 +80,9 @@ def shipping(request):
                 messages.error(request,('Address form not valid'))
                 return redirect('account')
 
-    
-
-""" Update and create new account information """
+@csrf_exempt
 def account(request):
+    """ Update and create new account information """
     if request.method == 'PATCH':
         if request.user.is_authenticated:
             """ Update password for user """
@@ -84,9 +109,10 @@ def account(request):
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
 
-""" Sign user in on post, update password on patch, or get sign in 
-    form on get """
+@csrf_exempt
 def signin(request):
+    """ Sign user in on post, update password on patch, or get sign in 
+    form on get """
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['userpassword']
@@ -101,12 +127,11 @@ def signin(request):
     elif request.method == "GET":
         return render(request, "signin.html", {})
 
-
+@csrf_exempt
 def signout(request):
     logout(request)
     messages.success(request,('You have been logged out'))
     return redirect('home')			
-
 
 
 
@@ -225,7 +250,6 @@ def Discount_view(request):
         except:
             return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
         try:
-            print(new_discount)
             new_discount.save()
         except:
             return HttpResponse("could not save into the database", status = status.HTTP_404_NOT_FOUND)
@@ -318,15 +342,40 @@ def Product_detail_view(request, product_id):
                                 content_type = 'application/json')
     elif (request.method == "PATCH"):
         try:
-            product_detail = Products.objects.get(id = product_id)
-            product_detail_value = product_detail.get()
+            product_detail = Products.objects.filter(id = product_id)
+            product_detail_info = product_detail.get()
         except:
             return HttpResponse('product does not exists', status=status.HTTP_400_BAD_REQUEST)
         try:
             data = json.loads(request.body.decode('utf-8'))
-            for key in data.keys():
-                product_detail_value[key] = data[key]
-            return JsonResponse(list(product_detail.values)[0], safe=False, status = status.HTTP_201_CREATED, 
+            if ('name' in data.keys()):
+                product_detail_info.name = data['name']
+            if ('description' in data.keys()):
+                product_detail_info.description = data['description']
+            if ('price' in data.keys()):
+                product_detail_info.price = data['price']
+            if ('category' in data.keys()):
+                product_detail_info.category = Category.objects.all().filter(name = data['category'])[0]
+            if ('image' in data.keys()):
+                product_detail_info.image = data['image']
+            if ('max_quantity' in data.keys()):
+                product_detail_info.max_quantity = data['max_quantity']
+            if ('min_quantity_retail' in data.keys()):
+                product_detail_info.min_quantity_retail = data['min_quantity_retail']
+            discount_list = []
+            if ('discount' in data.keys()):
+                product_detail_info.discount.clear()
+                try:
+                    for discount in data['discount']:
+                        product_detail_info.discount.add(Discount.objects.get(id=discount))
+                        discount_list.append(Discount.objects.all().values().filter(id=discount)[0])
+                except:
+                    return HttpResponse('Could not find discount', status=status.HTTP_400_BAD_REQUEST)
+            product_detail_info.save()
+            updated_product = Products.objects.all().values().filter(id=product_id)[0]
+            updated_product['category'] = Category.objects.all().values().filter(name = data['category'])[0]
+            updated_product['discounts'] = discount_list
+            return JsonResponse(updated_product, safe=False, status = status.HTTP_201_CREATED, 
                                         content_type = 'application/json')
         except:
             return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)

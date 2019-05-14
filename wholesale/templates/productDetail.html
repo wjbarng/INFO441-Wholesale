@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %} {{ product.name}} {% endblock %}
+{% block content %}
+    <img src={{ product.image }} alt="user image"/>
+    <ul>
+        <li>name: {{ product.name }}</li>
+        <li>description: {{ product.description }}</li>
+        <li>price: {{ product.price }}</li>
+        <li>category: {{ category.name }} </li>
+        <li>max_quantity: {{ product.max_quantity }} </li>
+        <li>min_quantity_retail: {{ product.min_quantity_retail }} </li>
+    </ul>>
+{% endblock %}
