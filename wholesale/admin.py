@@ -13,4 +13,5 @@ admin.site.register(Payment)
 admin.site.register(ShippingAddress)
 admin.site.register(ShippingMethod)
 admin.site.register(Order)
-
+# admin.site.register(Seller)
+# admin.site.register(BusinessApplication)

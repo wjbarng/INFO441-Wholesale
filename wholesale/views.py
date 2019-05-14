@@ -16,9 +16,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 from decimal import Decimal
+from django.db import DatabaseError
 
 import json
 import datetime
+
+
+DatabaseErrorMessage = "Error interacting with database."
 
 @csrf_exempt
 def homepage(request):
@@ -103,6 +107,8 @@ def about(request):
 def support(request):
     return render(request, "support.html", {})
 
+     
+
 """ Post a new business application or delete an application by business name """
 """ Stanley worked on this function, app did not work when I removed this function"""
 @csrf_exempt
@@ -113,39 +119,58 @@ def application(request):
     elif request.method == 'POST':
         form = BusinessApplicationForm(request.POST)
         if form.is_valid():
-            application = BusinessApplication.objects.create(busName = form.cleaned_data['busName'], busAddress = form.cleaned_data['busAddress'], 
-                                                             busZip = form.cleaned_data['busZip'], busCity = form.cleaned_data['busCity'], 
-                                                             busState = form.cleaned_data['busState'], busEmail = form.cleaned_data['busEmail'], 
-                                                             busPhone = form.cleaned_data['busPhone'])
-            application.save()
+            try:
+                application = BusinessApplication.objects.create(busName = form.cleaned_data['busName'], busAddress = form.cleaned_data['busAddress'], 
+                                                                busZip = form.cleaned_data['busZip'], busCity = form.cleaned_data['busCity'], 
+                                                                busState = form.cleaned_data['busState'], busEmail = form.cleaned_data['busEmail'], 
+                                                                busPhone = form.cleaned_data['busPhone'])
+                application.save()
+            except DatabaseError:
+                return HttpReponse(DatabaseErrorMessage, status=400)
             messages.success(request,('Application submitted'))
             return redirect('home')
         else:
             messages.error(request,('Application form not valid'))
             return redirect('application')
     elif request.method == 'DELETE':
-        data = request.data
-        BusinessApplication.objects.filter(busName = data['name']).delete()
-        return HttpResponse("Delete successful")
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except:
+            return HttpResponse('Json encode error', status = status.HTTP_400_BAD_REQUEST)
+        application = BusinessApplication.objects.filter(busName = data['name'])
+        if application.exists():
+            application.delete()
+            return HttpResponse("Delete successful", status = status.HTTP_200_OK)
+        else:
+            return HttpResponse("Application not found", status = status.HTTP_404_NOT_FOUND)
+    else:
+        return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
+
 
 
 """ Creates new address for shipping or deletes address associated with user """
 """ Stanley worked on this function, App does not work without this function"""
 @csrf_exempt
-@api_view(['GET', 'POST', 'DELETE'])
+# @api_view(['GET', 'POST', 'DELETE'])
 def shipping(request):
     if request.method == 'GET':
         return render(request, 'account.html', {'shippingForm': ShippingAddressForm})
     elif request.method == "POST":
+        print("test1")
         if request.user.is_authenticated:
+            print("test2")
             form = ShippingAddressForm(request.POST)
             if form.is_valid():
                 u = User.objects.get(id = request.user.id)
                 customer = u.customers
-                shippingAddress = ShippingAddress.objects.create(custID=customer, shipAddFname = form.cleaned_data['first_name'],
-                                    shipAddLname = form.cleaned_data['last_name'], shipAddAddress = form.cleaned_data['address'], shipAddCity = form.cleaned_data['city'],
-                                    shipAddState = form.cleaned_data['state'], shipAddZip = form.cleaned_data['shipZip'], shipAddPhone = form.cleaned_data['phone'])
-                shippingAddress.save()
+                print("test3")
+                try:
+                    shippingAddress = ShippingAddress.objects.create(custID=customer, shipAddFname = form.cleaned_data['first_name'],
+                                        shipAddLname = form.cleaned_data['last_name'], shipAddAddress = form.cleaned_data['address'], shipAddCity = form.cleaned_data['city'],
+                                        shipAddState = form.cleaned_data['state'], shipAddZip = form.cleaned_data['shipZip'], shipAddPhone = form.cleaned_data['phone'])
+                    shippingAddress.save()
+                except DatabaseError:
+                    return HttpReponse(DatabaseErrorMessage, status=400)
                 messages.success(request,('Address saved'))
                 return render(request, "account.html", {'fname': form.cleaned_data['first_name'], 'lname': form.cleaned_data['last_name'],
                                 'city': form.cleaned_data['city'], 'state': form.cleaned_data['state'], 'zip': form.cleaned_data['shipZip'],
@@ -153,12 +178,28 @@ def shipping(request):
             else:
                 messages.error(request,('Address form not valid'))
                 return redirect('account')
+        else:
+            return Response(status = status.HTTP_403_FORBIDDEN)
     elif request.method == "DELETE":
+        print("test1")
         if request.user.is_authenticated:
+            print("test2")
             u = User.objects.get(id = request.user.id)
             customer = u.customers
-            shippingAddress = ShippingAddress.objects.filter(custID = customer).delete()
-            return HttpResponse("Delete successful")
+            shippingAddress = ShippingAddress.objects.filter(custID = customer)
+            print("test3")
+            if shippingAddress.exists():
+                print("test6")
+                shippingAddress.delete()
+                return HttpResponse("Delete successful", status = status.HTTP_200_OK)
+            else:
+                return HttpResponse("Addresses not found", status = status.HTTP_404_NOT_FOUND)
+            print("test4")
+        else:
+            print("test5")
+            return Response(status = status.HTTP_403_FORBIDDEN)
+    else:
+        return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -173,20 +214,30 @@ def account(request):
     if request.method == 'PATCH':
         if request.user.is_authenticated:
             """ Update password for user """
-            data = request.data
+            print('authenticated')
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except:
+                return HttpResponse('Json encode error', status = status.HTTP_400_BAD_REQUEST)
             u = User.objects.get(id = request.user.id)
             u.password = data['password']
             u.save()
             messages.success(request,('Password updated'))
             return redirect('account')
+        else:
+            print('forbidden')
+            return Response(status = status.HTTP_403_FORBIDDEN)
     elif request.method == 'GET':
         return render(request, "account.html", {'shippingForm': ShippingAddressForm})
     elif request.method == 'POST':
         if request.user.is_authenticated:
             number = request.POST['cardNumber']
             name = request.POST['name']
-            payment = Payment.objects.create(CardNumber = number, Name = name)
-            payment.save()
+            try:
+                payment = Payment.objects.create(CardNumber = number, Name = name)
+                payment.save()
+            except DatabaseError:
+                return HttpResponse(DatabaseErrorMessage, status=400)
             """ Update customer table with new payment """
             u = User.objects.get(id = request.user.id)
             customer = u.customers
@@ -195,6 +246,11 @@ def account(request):
 
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
+        else:
+            return Response(status = status.HTTP_403_FORBIDDEN)
+    else:
+        return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
+       
 
 """ Sign user in on post, update password on patch, or get sign in 
     form on get """
