@@ -48,8 +48,14 @@ def product_detail(request, product_id):
 
 @csrf_exempt
 def product_regi(request):
-    if request.method == "POST":
-        
+    """ This is a view page for the product registraion """
+    if (request.method == "POST"):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
@@ -77,6 +83,10 @@ def product_regi(request):
         else:
             messages.error(request,('Form not valid'))
             HttpResponseRedirect('registerProduct')
+    elif request.method == "DELETE":
+        if request.user.is_authenticated:
+            User.objects.filter(id = request.user.id).delete()
+            Customers.objects.filter(user = request.user).delete()
     elif request.method == "GET":
         return render(request, "registerProduct.html", {'form': ProductRegistrationForm})
 
@@ -92,8 +102,102 @@ def about(request):
 def support(request):
     return render(request, "support.html", {})
 
+""" Post a new business application or delete an application by business name """
+""" Stanley worked on this function"""
+@csrf_exempt
+@api_view(['GET', 'POST', 'DELETE'])
+def application(request):
+    if request.method == 'GET':
+        return render(request, 'application.html', {'form': BusinessApplicationForm})
+    elif request.method == 'POST':
+        form = BusinessApplicationForm(request.POST)
+        if form.is_valid():
+            application = BusinessApplication.objects.create(busName = form.cleaned_data['busName'], busAddress = form.cleaned_data['busAddress'], 
+                                                             busZip = form.cleaned_data['busZip'], busCity = form.cleaned_data['busCity'], 
+                                                             busState = form.cleaned_data['busState'], busEmail = form.cleaned_data['busEmail'], 
+                                                             busPhone = form.cleaned_data['busPhone'])
+            application.save()
+            messages.success(request,('Application submitted'))
+            return redirect('home')
+        else:
+            messages.error(request,('Application form not valid'))
+            return redirect('application')
+    elif request.method == 'DELETE':
+        data = request.data
+        BusinessApplication.objects.filter(busName = data['name']).delete()
+        return HttpResponse("Delete successful")
+
+
+""" Creates new address for shipping or deletes address associated with user """
+""" Stanley worked on this function"""
+@csrf_exempt
+@api_view(['GET', 'POST', 'DELETE'])
+def shipping(request):
+    if request.method == 'GET':
+        return render(request, 'account.html', {'shippingForm': ShippingAddressForm})
+    elif request.method == "POST":
+        if request.user.is_authenticated:
+            form = ShippingAddressForm(request.POST)
+            if form.is_valid():
+                u = User.objects.get(id = request.user.id)
+                customer = u.customers
+                shippingAddress = ShippingAddress.objects.create(custID=customer, shipAddFname = form.cleaned_data['first_name'],
+                                    shipAddLname = form.cleaned_data['last_name'], shipAddAddress = form.cleaned_data['address'], shipAddCity = form.cleaned_data['city'],
+                                    shipAddState = form.cleaned_data['state'], shipAddZip = form.cleaned_data['shipZip'], shipAddPhone = form.cleaned_data['phone'])
+                shippingAddress.save()
+                messages.success(request,('Address saved'))
+                return render(request, "account.html", {'fname': form.cleaned_data['first_name'], 'lname': form.cleaned_data['last_name'],
+                                'city': form.cleaned_data['city'], 'state': form.cleaned_data['state'], 'zip': form.cleaned_data['shipZip'],
+                                'address': form.cleaned_data['address'], 'phone': form.cleaned_data['phone']})
+            else:
+                messages.error(request,('Address form not valid'))
+                return redirect('account')
+    elif request.method == "DELETE":
+        if request.user.is_authenticated:
+            u = User.objects.get(id = request.user.id)
+            customer = u.customers
+            shippingAddress = ShippingAddress.objects.filter(custID = customer).delete()
+            return HttpResponse("Delete successful")
+
+
+
+    
+
+""" Update and create new account information """
+""" Stanley worked on this function"""
+@csrf_exempt
+@api_view(['GET', 'POST', 'PATCH'])
+def account(request):
+    """ Update and create new account information """
+    if request.method == 'PATCH':
+        if request.user.is_authenticated:
+            """ Update password for user """
+            data = request.data
+            u = User.objects.get(id = request.user.id)
+            u.password = data['password']
+            u.save()
+            messages.success(request,('Password updated'))
+            return redirect('account')
+    elif request.method == 'GET':
+        return render(request, "account.html", {'shippingForm': ShippingAddressForm})
+    elif request.method == 'POST':
+        if request.user.is_authenticated:
+            number = request.POST['cardNumber']
+            name = request.POST['name']
+            payment = Payment.objects.create(CardNumber = number, Name = name)
+            payment.save()
+            """ Update customer table with new payment """
+            u = User.objects.get(id = request.user.id)
+            customer = u.customers
+            customer.PaymentId = payment
+            customer.save()
+
+            messages.success(request,('Card saved'))
+            return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
+
 """ Sign user in on post, update password on patch, or get sign in 
     form on get """
+""" Stanley worked on this function"""
 @csrf_exempt
 @api_view(['GET', 'POST'])
 def signin(request):
@@ -123,6 +227,7 @@ def signout(request):
 
 """ Registers a new individual user on post, deletes user on delete,
     and gets the register form on get """
+""" Stanley worked on this function"""
 @csrf_exempt
 @api_view(['GET', 'POST', 'DELETE'])
 def register(request):
@@ -162,7 +267,11 @@ def Category_view(request):
         all_category = list(Category.objects.all().values())
         return JsonResponse(all_category, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             # Get the data and check if the data is valid
@@ -201,7 +310,11 @@ def Category_detail_view(request, category_id):
         return JsonResponse(category_info, safe=False, status = status.HTTP_200_OK, 
                                 content_type = 'application/json')
     elif (request.method == "PATCH"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             category_info = Category.objects.filter(id = category_id)
@@ -228,7 +341,11 @@ def Category_detail_view(request, category_id):
         except:
             return HttpResponse('Update failed', status=status.HTTP_400_BAD_REQUEST)
     elif (request.method == "DELETE"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         category = Category.objects.filter(id = category_id)
         # if category exists it delte the category
@@ -247,7 +364,11 @@ def Discount_view(request):
         all_discounts = list(Discount.objects.all().values())
         return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             # get the data and check if the data is valid
@@ -267,7 +388,11 @@ def Discount_view(request):
         return JsonResponse(data, safe=False, status=status.HTTP_201_CREATED, 
                                         content_type='application/json')
     elif (request.method == "PATCH"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             data = json.loads(request.body.decode('utf-8'))
@@ -306,7 +431,11 @@ def Product_view(request):
             product['category'] = list(Category.objects.all().values().filter(id = product['category_id']))
         return JsonResponse(all_products, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             # check if the data is valid
@@ -354,7 +483,11 @@ def Product_view(request):
         }
         return JsonResponse(post_product, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "DELETE"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             data = json.loads(request.body.decode('utf-8'))
@@ -389,7 +522,11 @@ def Product_detail_view(request, product_id):
         return JsonResponse(product_detail, safe=False, status = status.HTTP_200_OK, 
                                 content_type = 'application/json')
     elif (request.method == "PATCH"):
-        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             product_detail = Products.objects.filter(id = product_id)
