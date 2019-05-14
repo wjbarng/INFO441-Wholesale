@@ -1,14 +1,18 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
+<<<<<<< HEAD
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm
+=======
+from .forms import RegistrationForm, ShippingAddressForm, BusinessApplicationForm
+>>>>>>> origin/stanley-1
 from django.contrib.auth.models import User
-from wholesale.models import Customers, Payment, ShippingAddress
-from .models import Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
+from wholesale.models import Customers, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-
-# Create your views here.
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework import viewsets
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -96,7 +100,38 @@ def about(request):
 def support(request):
     return render(request, "support.html", {})
 
+<<<<<<< HEAD
 @csrf_exempt
+=======
+""" Post a new business application or delete an application by business name """
+@csrf_exempt
+@api_view(['GET', 'POST', 'DELETE'])
+def application(request):
+    if request.method == 'GET':
+        return render(request, 'application.html', {'form': BusinessApplicationForm})
+    elif request.method == 'POST':
+        form = BusinessApplicationForm(request.POST)
+        if form.is_valid():
+            application = BusinessApplication.objects.create(busName = form.cleaned_data['busName'], busAddress = form.cleaned_data['busAddress'], 
+                                                             busZip = form.cleaned_data['busZip'], busCity = form.cleaned_data['busCity'], 
+                                                             busState = form.cleaned_data['busState'], busEmail = form.cleaned_data['busEmail'], 
+                                                             busPhone = form.cleaned_data['busPhone'])
+            application.save()
+            messages.success(request,('Application submitted'))
+            return redirect('home')
+        else:
+            messages.error(request,('Application form not valid'))
+            return redirect('application')
+    elif request.method == 'DELETE':
+        data = request.data
+        BusinessApplication.objects.filter(busName = data['name']).delete()
+        return HttpResponse("Delete successful")
+
+
+""" Creates new address for shipping or deletes address associated with user """
+@csrf_exempt
+@api_view(['GET', 'POST', 'DELETE'])
+>>>>>>> origin/stanley-1
 def shipping(request):
     if request.method == 'GET':
         return render(request, 'account.html', {'shippingForm': ShippingAddressForm})
@@ -111,20 +146,38 @@ def shipping(request):
                                     shipAddState = form.cleaned_data['state'], shipAddZip = form.cleaned_data['shipZip'], shipAddPhone = form.cleaned_data['phone'])
                 shippingAddress.save()
                 messages.success(request,('Address saved'))
-                return render(request, "account.html", {'address': form.cleaned_data['address']})
+                return render(request, "account.html", {'fname': form.cleaned_data['first_name'], 'lname': form.cleaned_data['last_name'],
+                                'city': form.cleaned_data['city'], 'state': form.cleaned_data['state'], 'zip': form.cleaned_data['shipZip'],
+                                'address': form.cleaned_data['address'], 'phone': form.cleaned_data['phone']})
             else:
                 messages.error(request,('Address form not valid'))
                 return redirect('account')
+    elif request.method == "DELETE":
+        if request.user.is_authenticated:
+            u = User.objects.get(id = request.user.id)
+            customer = u.customers
+            shippingAddress = ShippingAddress.objects.filter(custID = customer).delete()
+            return HttpResponse("Delete successful")
 
+
+
+<<<<<<< HEAD
 @csrf_exempt
+=======
+    
+
+""" Update and create new account information """
+@csrf_exempt
+@api_view(['GET', 'POST', 'PATCH'])
+>>>>>>> origin/stanley-1
 def account(request):
     """ Update and create new account information """
     if request.method == 'PATCH':
         if request.user.is_authenticated:
             """ Update password for user """
-            newPassword = request.POST['editPassword']
+            data = request.data
             u = User.objects.get(id = request.user.id)
-            u.password = newPassword
+            u.password = data['password']
             u.save()
             messages.success(request,('Password updated'))
             return redirect('account')
@@ -145,7 +198,14 @@ def account(request):
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
 
+<<<<<<< HEAD
 @csrf_exempt
+=======
+""" Sign user in on post, update password on patch, or get sign in 
+    form on get """
+@csrf_exempt
+@api_view(['GET', 'POST'])
+>>>>>>> origin/stanley-1
 def signin(request):
     """ Sign user in on post, update password on patch, or get sign in 
     form on get """
@@ -171,7 +231,13 @@ def signout(request):
 
 
 
+<<<<<<< HEAD
+=======
+""" Registers a new individual user on post, deletes user on delete,
+    and gets the register form on get """
+>>>>>>> origin/stanley-1
 @csrf_exempt
+@api_view(['GET', 'POST', 'DELETE'])
 def register(request):
     """ Registers a new individual user on post, deletes user on delete,
     and gets the register form on get """
@@ -198,6 +264,7 @@ def register(request):
         if request.user.is_authenticated:
             User.objects.filter(id = request.user.id).delete()
             Customers.objects.filter(user = request.user).delete()
+            return HttpResponse("Delete successful")
     elif request.method == "GET":
         return render(request, "register.html", {'form': RegistrationForm})
 

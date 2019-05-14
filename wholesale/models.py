@@ -34,12 +34,12 @@ class Category(models.Model):
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
     description = models.CharField(default="", max_length=250)
-    image = models.ImageField(null=True)
+    #image = models.ImageField(null=True)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)
     description = models.CharField(default="", max_length=250)
-    image = models.ImageField(null=True)
+    #image = models.ImageField(null=True)
     price = models.FloatField(default=0.00)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
@@ -112,3 +112,12 @@ class Seller(models.Model):
     password = models.CharField(max_length=30)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
+
+class BusinessApplication(models.Model):
+    busName = models.CharField(max_length=30)
+    busAddress = models.CharField(max_length=30)
+    busZip = models.CharField(max_length=30)
+    busCity = models.CharField(max_length=30)
+    busState = models.CharField(max_length=2)
+    busEmail = models.EmailField(max_length=30)
+    busPhone = models.CharField(max_length=30)
