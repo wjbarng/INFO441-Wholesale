@@ -23,3 +23,12 @@ class ShippingAddressForm(forms.Form):
     state = forms.CharField(label='State (2 letter abbreviation)', max_length=2, required=True)
     shipZip = forms.CharField(label='Zip', max_length=30, required=True)
     phone = forms.CharField(label='Phone Number', max_length=30, required=True)
+
+class BusinessApplicationForm(forms.Form):
+    busName = forms.CharField(label='Business Name', max_length=30, required=True)
+    busAddress = forms.CharField(label='Business Address', max_length=30, required=True)
+    busZip = forms.CharField(label='Zip', max_length=30, required=True)
+    busCity = forms.CharField(label='City', max_length=30, required=True)
+    busState = forms.CharField(label='State (2 letter abbreviation)', max_length=2, required=True)
+    busEmail = forms.EmailField(label='Business Email Address', max_length=30, required=True)
+    busPhone = forms.CharField(label='Business Phone Number', max_length=30, required=True)

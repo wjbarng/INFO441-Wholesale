@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %} Business Application {% endblock %}
+
+
+{% block content %}
+
+
+<h3>Business Application</h3>
+<p>Please fill out the application to become a business member.
+    Once your application has been processed and approved, you will
+    receive an email with your membership information.
+</p>
+
+<form method="POST" >
+        {% csrf_token %}
+        {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+
+{% endblock %}

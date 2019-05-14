@@ -112,3 +112,12 @@ class Seller(models.Model):
     password = models.CharField(max_length=30)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
+
+class BusinessApplication(models.Model):
+    busName = models.CharField(max_length=30)
+    busAddress = models.CharField(max_length=30)
+    busZip = models.CharField(max_length=30)
+    busCity = models.CharField(max_length=30)
+    busState = models.CharField(max_length=2)
+    busEmail = models.EmailField(max_length=30)
+    busPhone = models.CharField(max_length=30)
