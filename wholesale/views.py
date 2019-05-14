@@ -64,7 +64,6 @@ def product_regi(request):
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
-            print(clean_data)
             try:
                 try:
                     # connecting foerign key with Category
@@ -156,14 +155,11 @@ def shipping(request):
     if request.method == 'GET':
         return render(request, 'account.html', {'shippingForm': ShippingAddressForm})
     elif request.method == "POST":
-        print("test1")
         if request.user.is_authenticated:
-            print("test2")
             form = ShippingAddressForm(request.POST)
             if form.is_valid():
                 u = User.objects.get(id = request.user.id)
                 customer = u.customers
-                print("test3")
                 try:
                     shippingAddress = ShippingAddress.objects.create(custID=customer, shipAddFname = form.cleaned_data['first_name'],
                                         shipAddLname = form.cleaned_data['last_name'], shipAddAddress = form.cleaned_data['address'], shipAddCity = form.cleaned_data['city'],
@@ -181,22 +177,16 @@ def shipping(request):
         else:
             return Response(status = status.HTTP_403_FORBIDDEN)
     elif request.method == "DELETE":
-        print("test1")
         if request.user.is_authenticated:
-            print("test2")
             u = User.objects.get(id = request.user.id)
             customer = u.customers
             shippingAddress = ShippingAddress.objects.filter(custID = customer)
-            print("test3")
             if shippingAddress.exists():
-                print("test6")
                 shippingAddress.delete()
                 return HttpResponse("Delete successful", status = status.HTTP_200_OK)
             else:
                 return HttpResponse("Addresses not found", status = status.HTTP_404_NOT_FOUND)
-            print("test4")
         else:
-            print("test5")
             return Response(status = status.HTTP_403_FORBIDDEN)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
@@ -214,7 +204,6 @@ def account(request):
     if request.method == 'PATCH':
         if request.user.is_authenticated:
             """ Update password for user """
-            print('authenticated')
             try:
                 data = json.loads(request.body.decode('utf-8'))
             except:
@@ -225,7 +214,6 @@ def account(request):
             messages.success(request,('Password updated'))
             return redirect('account')
         else:
-            print('forbidden')
             return Response(status = status.HTTP_403_FORBIDDEN)
     elif request.method == 'GET':
         return render(request, "account.html", {'shippingForm': ShippingAddressForm})
@@ -243,7 +231,6 @@ def account(request):
             customer = u.customers
             customer.PaymentId = payment
             customer.save()
-
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
         else:
