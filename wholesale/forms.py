@@ -23,3 +23,26 @@ class ShippingAddressForm(forms.Form):
     state = forms.CharField(label='State (2 letter abbreviation)', max_length=2, required=True)
     shipZip = forms.CharField(label='Zip', max_length=30, required=True)
     phone = forms.CharField(label='Phone Number', max_length=30, required=True)
+
+class ProductRegistrationForm(forms.Form):
+    CATEGORY_CHOICES = (
+        ('Pantry & Dry Goods', 'Pantry & Dry Goods'),
+        ('Bath & Facial Tissue', 'Bath & Facial Tissue'),
+        ('Canned Goods', 'Canned Goods'),
+        ('Cleaning Products', 'Cleaning Products'),
+        ('Coffee & Sweeteners', 'Coffee & Sweeteners'),
+        ('Emergency Kits & Supplies', 'Emergency Kits & Supplies'),
+        ('Breakroom Serving Supplies', 'Breakroom Serving Supplies'),
+        ('Gourmet Foods', 'Gourmet Foods'),
+        ('Paper Towels', 'Paper Towels'),
+        ('Snacks', 'Snacks'),
+        ('Water & Beverages', 'Water & Beverages'),
+    )
+    name = forms.CharField(label='Name', max_length=50, required=True)
+    description = forms.CharField(label='Description', max_length=100)
+    image = forms.ImageField(required=False)
+    price = forms.FloatField(required=True)
+    category = forms.ChoiceField(required=True, choices=CATEGORY_CHOICES)
+    max_quantity = forms.IntegerField(required=True)
+    min_quantity_retail = forms.IntegerField(required=True)
+    discount = forms.FloatField(required=False)

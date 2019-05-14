@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
-from .forms import RegistrationForm, ShippingAddressForm
+from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm
 from django.contrib.auth.models import User
 from wholesale.models import Customers, Payment, ShippingAddress
 from .models import Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
@@ -41,12 +41,48 @@ def product_detail(request, product_id):
 
         except:
             return HttpResponse("Category does not exists.", status=404)
-        print(product)
-        print(category)
         return HttpResponse(render(request, "productDetail.html", 
 			{'product':product, 'category':category}), status=200)
     else:
         return HttpResponse("Method not allowed on /product/id.", status=405)
+
+@csrf_exempt
+def product_regi(request):
+    if request.method == "POST":
+        form = ProductRegistrationForm(request.POST)
+        if form.is_valid():
+            clean_data = form.clean()
+            print(clean_data)
+            try:
+                try:
+                    # connecting foerign key with Category
+                    category = Category.objects.all().filter(name = clean_data['category'])[0]
+                except:
+                    return HttpResponse('Check category name', 
+                        status=status.HTTP_400_BAD_REQUEST)
+                print(category)
+                new_product = Products(name = clean_data['name'],
+                                    description = clean_data['description'],
+                                    image = clean_data['image'],
+                                    price = clean_data['price'],
+                                    category = category,
+                                    max_quantity = clean_data['max_quantity'],
+                                    min_quantity_retail = clean_data['min_quantity_retail'])
+                new_product.save()
+                # messages.success(request,('You have successfully registered'))
+                return render(request, "products.html")
+            except:
+                # messages.error(request,('Could not register product'))
+                return HttpResponseRedirect('registerProduct')
+        else:
+            # messages.error(request,('Form not valid'))
+            HttpResponseRedirect('registerProduct')
+    elif request.method == "DELETE":
+        if request.user.is_authenticated:
+            User.objects.filter(id = request.user.id).delete()
+            Customers.objects.filter(user = request.user).delete()
+    elif request.method == "GET":
+        return render(request, "registerProduct.html", {'form': ProductRegistrationForm})
 
 @csrf_exempt
 def wholesale(request):
@@ -167,20 +203,24 @@ def register(request):
 
 @csrf_exempt
 def Category_view(request):
+    """ This view is an API for the categories"""
     if (request.method == "GET"):
         all_category = list(Category.objects.all().values())
         return JsonResponse(all_category, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
         try:
+            # Get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if ('description' not in data.keys()):
                 data['description'] = ""
             if ('image' not in data.keys()):
                 data['image'] = None
             try:
+                # create new Category object
                 new_category = Category(name = data['name'],
                                         description = data['description'],
                                         image = data['image'])
+                # save into the database
                 new_category.save()
             except:
                 return HttpResponse('could not save into the databse', status = status.HTTP_400_BAD_REQUEST)
@@ -193,11 +233,15 @@ def Category_view(request):
 
 @csrf_exempt
 def Category_detail_view(request, category_id):
+    """ This view is an API for the category detail"""
     if (request.method == "GET"):
         try:
             category_info = Category.objects.all().values().get(id = category_id)
         except:
             return HttpResponse("category does not exist", status = status.HTTP_404_NOT_FOUND)
+        # get the products in specific category
+        category_products = Products.objects.all().filter(category_id = category_id).values()
+        category_info['prodcuts'] = list(category_products)
         return JsonResponse(category_info, safe=False, status = status.HTTP_200_OK, 
                                 content_type = 'application/json')
     elif (request.method == "PATCH"):
@@ -207,16 +251,18 @@ def Category_detail_view(request, category_id):
         except:
             return HttpResponse("category does not exist", status = status.HTTP_404_NOT_FOUND)
         try:
+            # get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if ('name' in data.keys()):
                 category_info_values.name = data['name']
             if ('description' in data.keys()):
                 category_info_values.description = data['description']
-            if ('name' in data.keys()):
+            if ('image' in data.keys()):
                 category_info_values.image = data['image']
         except:
             return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
         try:
+            # update the data
             category_info_values.save()
             updated_category_info = list(category_info.values())
             return JsonResponse(updated_category_info, safe=False, status = status.HTTP_201_CREATED, 
@@ -225,6 +271,7 @@ def Category_detail_view(request, category_id):
             return HttpResponse('Update failed', status=status.HTTP_400_BAD_REQUEST)
     elif (request.method == "DELETE"):
         category = Category.objects.filter(id = category_id)
+        # if category exists it delte the category
         if (category.exists()):
             category.delete()
             return HttpResponse('The data is successfully deleted', status = status.HTTP_200_OK)
@@ -235,11 +282,13 @@ def Category_detail_view(request, category_id):
 
 @csrf_exempt
 def Discount_view(request):
+    """ This view is an API for the discounts"""
     if (request.method == "GET"):
         all_discounts = list(Discount.objects.all().values())
         return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
         try:
+            # get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if (data['minQuan'] > data['maxQuan']):
                 HttpResponse("minQuan cannot be larger than maxQuan", safe=False, status = status.HTTP_404_NOT_FOUND)
@@ -255,24 +304,53 @@ def Discount_view(request):
             return HttpResponse("could not save into the database", status = status.HTTP_404_NOT_FOUND)
         return JsonResponse(data, safe=False, status=status.HTTP_201_CREATED, 
                                         content_type='application/json')
+    elif (request.method == "PATCH"):
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            discount = Discount.objects.get(id = data['id'])
+            # if the key exists it updates the data
+            if ('percentage' in data.keys()):
+                discount.percentage = data['percentage']
+            if ('minQuan' in data.keys()):
+                discount.minQuan = data['minQuan']
+            if ('maxQuan' in data.keys()):
+                discount.maxQuan = data['maxQuan']
+            if ('disShipping' in data.keys()):
+                discount.disShipping = data['disShipping']
+            if (discount.minQuan > discount.maxQuan):
+                return HttpResponse('minQuan cannot be larger than maxQuan', status=status.HTTP_400_BAD_REQUEST)
+            try:
+                discount.save()
+            except:
+                HttpResponse('Updating failed', status=status.HTTP_400_BAD_REQUEST)
+            new_discount = list(Discount.objects.all().values().filter(id = data['id']))
+            return JsonResponse(new_discount, safe=False, status=status.HTTP_201_CREATED, 
+                                        content_type='application/json')
+        except:
+            return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
 
 @csrf_exempt
 def Product_view(request):
+    """ THis view is an API for products"""
     if (request.method == "GET"):
         all_products = list(Products.objects.all().values())
+        # change the category id to category
+        for product in all_products:
+            product['category'] = list(Category.objects.all().values().filter(id = product['category_id']))
         return JsonResponse(all_products, safe=False, status=status.HTTP_200_OK)
-
     elif (request.method == "POST"):
         try:
+            # check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if ('description' not in data.keys()):
                 data['description'] = ""
             if ('image' not in data.keys()):
                 data['image'] = None
             try:
+                # connecting foerign key with Category
                 category = Category.objects.all().filter(name = data['category'])[0]
             except:
                 return HttpResponse('Check category name', 
@@ -286,6 +364,7 @@ def Product_view(request):
                                     min_quantity_retail = data['min_quantity_retail'])
             new_product.save()
             discount_list = []
+            # connects many-to-many relationship with discounts
             for discount in data['discount']:
                 new_product.discount.add(Discount.objects.get(id=discount))
                 discount_list.append(Discount.objects.all().values().filter(id=discount)[0])
@@ -329,6 +408,7 @@ def Product_view(request):
 
 @csrf_exempt
 def Product_detail_view(request, product_id):
+    """ This view is an API of the product detail"""
     if (request.method == "GET"):
         try:
             product_detail = list(Products.objects.all().values().filter(id = product_id))[0]

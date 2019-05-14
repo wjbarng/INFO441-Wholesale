@@ -2,9 +2,9 @@
 {% block title %} {{ product.name}} {% endblock %}
 {% block content %}
     <img src={{ product.image }} alt="user image"/>
+    <h1>name: {{ product.name }}</h1>
+    <h2>description: {{ product.description }}</h2>
     <ul>
-        <li>name: {{ product.name }}</li>
-        <li>description: {{ product.description }}</li>
         <li>price: {{ product.price }}</li>
         <li>category: {{ category.name }} </li>
         <li>max_quantity: {{ product.max_quantity }} </li>
