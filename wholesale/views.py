@@ -1,9 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 <<<<<<< HEAD
-from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm
-=======
-from .forms import RegistrationForm, ShippingAddressForm, BusinessApplicationForm
+from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 >>>>>>> origin/stanley-1
 from django.contrib.auth.models import User
 from wholesale.models import Customers, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
@@ -100,9 +98,6 @@ def about(request):
 def support(request):
     return render(request, "support.html", {})
 
-<<<<<<< HEAD
-@csrf_exempt
-=======
 """ Post a new business application or delete an application by business name """
 @csrf_exempt
 @api_view(['GET', 'POST', 'DELETE'])
@@ -131,7 +126,6 @@ def application(request):
 """ Creates new address for shipping or deletes address associated with user """
 @csrf_exempt
 @api_view(['GET', 'POST', 'DELETE'])
->>>>>>> origin/stanley-1
 def shipping(request):
     if request.method == 'GET':
         return render(request, 'account.html', {'shippingForm': ShippingAddressForm})
@@ -161,15 +155,11 @@ def shipping(request):
 
 
 
-<<<<<<< HEAD
-@csrf_exempt
-=======
     
 
 """ Update and create new account information """
 @csrf_exempt
 @api_view(['GET', 'POST', 'PATCH'])
->>>>>>> origin/stanley-1
 def account(request):
     """ Update and create new account information """
     if request.method == 'PATCH':
@@ -198,14 +188,10 @@ def account(request):
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
 
-<<<<<<< HEAD
-@csrf_exempt
-=======
 """ Sign user in on post, update password on patch, or get sign in 
     form on get """
 @csrf_exempt
 @api_view(['GET', 'POST'])
->>>>>>> origin/stanley-1
 def signin(request):
     """ Sign user in on post, update password on patch, or get sign in 
     form on get """
@@ -231,11 +217,8 @@ def signout(request):
 
 
 
-<<<<<<< HEAD
-=======
 """ Registers a new individual user on post, deletes user on delete,
     and gets the register form on get """
->>>>>>> origin/stanley-1
 @csrf_exempt
 @api_view(['GET', 'POST', 'DELETE'])
 def register(request):
