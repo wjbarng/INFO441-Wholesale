@@ -1,8 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
-<<<<<<< HEAD
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
->>>>>>> origin/stanley-1
 from django.contrib.auth.models import User
 from wholesale.models import Customers, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
 from django.contrib import messages
@@ -51,6 +49,7 @@ def product_detail(request, product_id):
 @csrf_exempt
 def product_regi(request):
     if request.method == "POST":
+        
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
@@ -62,7 +61,6 @@ def product_regi(request):
                 except:
                     return HttpResponse('Check category name', 
                         status=status.HTTP_400_BAD_REQUEST)
-                print(category)
                 new_product = Products(name = clean_data['name'],
                                     description = clean_data['description'],
                                     image = clean_data['image'],
@@ -71,13 +69,13 @@ def product_regi(request):
                                     max_quantity = clean_data['max_quantity'],
                                     min_quantity_retail = clean_data['min_quantity_retail'])
                 new_product.save()
-                # messages.success(request,('You have successfully registered'))
+                messages.success(request,('You have successfully registered'))
                 return render(request, "products.html")
             except:
-                # messages.error(request,('Could not register product'))
+                messages.error(request,('Could not register product'))
                 return HttpResponseRedirect('registerProduct')
         else:
-            # messages.error(request,('Form not valid'))
+            messages.error(request,('Form not valid'))
             HttpResponseRedirect('registerProduct')
     elif request.method == "DELETE":
         if request.user.is_authenticated:
@@ -236,7 +234,7 @@ def register(request):
                 user = User.objects.filter(username = form.cleaned_data['username']).get()
                 customer = Customers.objects.create(user = user, custFName = form.cleaned_data['first_name'], custLName = form.cleaned_data['last_name'],
                 custAddress = form.cleaned_data['custAddress'], custCity = form.cleaned_data['custCity'], custZip = form.cleaned_data['custZip'],
-                custState = form.cleaned_data['custState'], custPhone = form.cleaned_data['custPhone'])
+                custState = form.cleaned_data['custState'], custPhone = form.cleaned_data['custPhone'], custLevel = form.cleaned_data['custLevel'])
                 customer.save()
                 messages.success(request,('You have successfully registered'))
                 return redirect('signin')
@@ -258,6 +256,8 @@ def Category_view(request):
         all_category = list(Category.objects.all().values())
         return JsonResponse(all_category, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             # Get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
@@ -295,6 +295,8 @@ def Category_detail_view(request, category_id):
         return JsonResponse(category_info, safe=False, status = status.HTTP_200_OK, 
                                 content_type = 'application/json')
     elif (request.method == "PATCH"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             category_info = Category.objects.filter(id = category_id)
             category_info_values = category_info.get()
@@ -320,6 +322,8 @@ def Category_detail_view(request, category_id):
         except:
             return HttpResponse('Update failed', status=status.HTTP_400_BAD_REQUEST)
     elif (request.method == "DELETE"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         category = Category.objects.filter(id = category_id)
         # if category exists it delte the category
         if (category.exists()):
@@ -337,6 +341,8 @@ def Discount_view(request):
         all_discounts = list(Discount.objects.all().values())
         return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             # get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
@@ -355,6 +361,8 @@ def Discount_view(request):
         return JsonResponse(data, safe=False, status=status.HTTP_201_CREATED, 
                                         content_type='application/json')
     elif (request.method == "PATCH"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             data = json.loads(request.body.decode('utf-8'))
             discount = Discount.objects.get(id = data['id'])
@@ -392,6 +400,8 @@ def Product_view(request):
             product['category'] = list(Category.objects.all().values().filter(id = product['category_id']))
         return JsonResponse(all_products, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             # check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
@@ -438,6 +448,8 @@ def Product_view(request):
         }
         return JsonResponse(post_product, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "DELETE"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             data = json.loads(request.body.decode('utf-8'))
             product_name = data['name']
@@ -471,6 +483,8 @@ def Product_detail_view(request, product_id):
         return JsonResponse(product_detail, safe=False, status = status.HTTP_200_OK, 
                                 content_type = 'application/json')
     elif (request.method == "PATCH"):
+        if (Customers.objects.get(user_id = request.user.id).custLevel != 1):
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
             product_detail = Products.objects.filter(id = product_id)
             product_detail_info = product_detail.get()

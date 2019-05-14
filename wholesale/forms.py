@@ -13,6 +13,11 @@ class RegistrationForm(forms.Form):
     custState = forms.CharField(label='State (2 letter abbreviation)', max_length=2, required=True)
     custZip = forms.CharField(label='Zip', max_length=30, required=True)
     custPhone = forms.CharField(label='Phone Number', max_length=30, required=True)
+    LEVEL_CHOICES = (
+        (1, 'admin'),
+        (2, 'buyer')
+    )
+    custLevel = forms.ChoiceField(required=True, choices=LEVEL_CHOICES)
 
 class ShippingAddressForm(forms.Form):
     email = forms.EmailField(label='Email', max_length=30, required=True)

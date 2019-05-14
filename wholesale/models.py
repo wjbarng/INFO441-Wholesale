@@ -34,12 +34,12 @@ class Category(models.Model):
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField(null=True)
+    image = models.ImageField(null=True)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField(null=True)
+    image = models.ImageField(null=True)
     price = models.FloatField(default=0.00)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
@@ -61,6 +61,7 @@ class Customers(models.Model):
     custPhone = models.CharField(max_length = 20)
     businessName = models.CharField(null = True, max_length=50)
     PaymentID = models.ForeignKey(Payment, null=True, on_delete=models.CASCADE)
+    custLevel = models.IntegerField(default = 1)
 
     def save(self, *args, **kwargs):
         if self.custFName is not None and self.custLName is not None and self.businessName is None:
@@ -106,12 +107,13 @@ class Prod_order(models.Model):
 
   
 
+# Keeping this for the future
+# class Seller(models.Model):
+#     username = models.CharField(max_length=30)
+#     password = models.CharField(max_length=30)
+#     first_name = models.CharField(max_length=30)
+#     last_name = models.CharField(max_length=30)
 
-class Seller(models.Model):
-    username = models.CharField(max_length=30)
-    password = models.CharField(max_length=30)
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
 
 class BusinessApplication(models.Model):
     busName = models.CharField(max_length=30)
