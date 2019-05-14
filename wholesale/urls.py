@@ -11,13 +11,15 @@ from . import views
 
 router = DefaultRouter()
 urlpatterns = [
-    path('discounts', Discount_view, name='discount'),
-    path('categories', Category_view, name='category'),
-    path('categories/<int:category_id>', Category_detail_view, name='category detail'),
-    path('products', Product_view, name='product'),
-    path('products/<int:product_id>', Product_detail_view, name='product detail'),
+    path('api/discounts', Discount_view, name='discount'),
+    path('api/categories', Category_view, name='category'),
+    path('api/categories/<int:category_id>', Category_detail_view, name='category detail'),
+    path('api/products', Product_view, name='product'),
+    path('api/products/<int:product_id>', Product_detail_view, name='product detail'),
     path('', views.homepage, name='home'), 
-    path('product/', views.products, name='products'), 
+    path('products/', views.products, name='products'), 
+    path('products/<int:product_id>', views.product_detail, name='product detail'), 
+    path('products/register', views.product_regi, name="product register"),
     path('wholesale/', views.wholesale, name='wholesale'),
     path('about/', views.about, name='about'),
     path('support/', views.support, name='support'),
