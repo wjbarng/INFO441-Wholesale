@@ -4,10 +4,10 @@ import sys
 from django.contrib.auth.models import User
 
 class Discount(models.Model):
-    percentage = models.DecimalField(default=0.00, max_digits=3, decimal_places=2)
+    percentage = models.FloatField(default=0.00)
     minQuan = models.IntegerField(default=0)
     maxQuan = models.IntegerField(default=sys.maxsize)
-    disShipping = models.DecimalField(default=0.00, max_digits=3, decimal_places=2)
+    disShipping = models.FloatField(default=0.00)
 
 class Payment(models.Model):
     CardNumber = models.IntegerField()
@@ -34,13 +34,13 @@ class Category(models.Model):
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField()
+    #image = models.ImageField(null=True)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)
     description = models.CharField(default="", max_length=250)
-    #image = models.ImageField()
-    price = models.DecimalField(default=0.00, max_digits=10, decimal_places=2)
+    #image = models.ImageField(null=True)
+    price = models.FloatField(default=0.00)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
     min_quantity_retail = models.IntegerField(default=0)
@@ -57,10 +57,16 @@ class Customers(models.Model):
     custAddress = models.CharField(max_length = 80)
     custCity = models.CharField(max_length = 50)
     custState = models.CharField(max_length = 2)
-    custZip = models.IntegerField()
+    custZip = models.CharField(max_length = 20)
     custPhone = models.CharField(max_length = 20)
     businessName = models.CharField(null = True, max_length=50)
     PaymentID = models.ForeignKey(Payment, null=True, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        if self.custFName is not None and self.custLName is not None and self.businessName is None:
+            super(Customers, self).save(*args, **kwargs)
+        elif self.custFName is not None and self.custLName is not None and self.businessName is None:
+            super(Customers, self).save(*args, **kwargs)
 
 class ShippingAddress(models.Model):
     custID = models.ForeignKey(Customers, on_delete=models.CASCADE)
@@ -70,8 +76,14 @@ class ShippingAddress(models.Model):
     shipAddAddress = models.CharField(max_length = 80)
     shipAddCity = models.CharField(max_length = 50)
     shipAddState = models.CharField(max_length = 2)
-    shipAddZip = models.IntegerField()
+    shipAddZip = models.CharField(max_length = 20)
     shipAddPhone = models.CharField(max_length = 20)
+
+    def save(self, *args, **kwargs):
+        if self.shipAddFname is not None and self.shipAddLname is not None and self.businessName is None:
+            super(ShippingAddress, self).save(*args, **kwargs)
+        elif self.shipAddFname is not None and self.shipAddLname is not None and self.businessName is None:
+            super(ShippingAddress, self).save(*args, **kwargs)
 
 class Order(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
@@ -82,6 +94,8 @@ class Order(models.Model):
     shippingMethod = models.ForeignKey(ShippingMethod, on_delete=models.CASCADE)
     shippingAddress = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
     product = models.ManyToManyField(Products, through='Prod_order')
+
+    
     
 class Prod_order(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
@@ -90,25 +104,7 @@ class Prod_order(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
 
 
-    """ Check if an individual is specified (first/last name) or 
-        businessName is specified (businessName), customer either has
-        to be a retailer or an individual"""
-    def save(self):
-        if self.custFName != null and self.custLName != null and self.businessName == null:
-            super(Customers, self).save()
-        elif self.custFName == null and self.custLName == null and self.businessName != null:
-            super(Customers, self).save()
-
-
-
-    """ Check if an individual is specified (first/last name) or 
-    businessName is specified (businessName), customer either has
-    to be a retailer or an individual"""
-    def save(self):
-        if self.custFName != null and self.custLName != null and self.businessName == null:
-            super(ShippingAddress, self).save()
-        elif self.custFName == null and self.custLName == null and self.businessName != null:
-            super(ShippingAddress, self).save()
+  
 
 
 class Seller(models.Model):
@@ -116,3 +112,12 @@ class Seller(models.Model):
     password = models.CharField(max_length=30)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
+
+class BusinessApplication(models.Model):
+    busName = models.CharField(max_length=30)
+    busAddress = models.CharField(max_length=30)
+    busZip = models.CharField(max_length=30)
+    busCity = models.CharField(max_length=30)
+    busState = models.CharField(max_length=2)
+    busEmail = models.EmailField(max_length=30)
+    busPhone = models.CharField(max_length=30)
