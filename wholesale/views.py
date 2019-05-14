@@ -231,7 +231,7 @@ def account(request):
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
         else:
-            return Response(status = status.HTTP_403_FORBIDDEN)
+            return HttpResponse(status = status.HTTP_403_FORBIDDEN)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
        
