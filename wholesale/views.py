@@ -210,7 +210,7 @@ def account(request):
             messages.success(request,('Password updated'))
             return redirect('account')
         else:
-            return Response(status = status.HTTP_403_FORBIDDEN)
+            return HttpResponse(status = status.HTTP_403_FORBIDDEN)
     elif request.method == 'GET':
         return render(request, "account.html", {'shippingForm': ShippingAddressForm})
     elif request.method == 'POST':
