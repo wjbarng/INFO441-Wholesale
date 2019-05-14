@@ -75,14 +75,14 @@ View pages
 
 
 
-#Database
-The database contains individual tables like Seller to record admin information and
+# Database
+The database an individual table
 BusinessApplication to store applications for businesses that want to be members of
 our wholesale store. In addition, the Customers database is linked one to one with the
 Django user database to keep track of individual members of the wholesale store. Each
 customer can be linked to a payment method table. A shipping address table and order table
 is linked by a foreign key to the customer table. Each order is linked by a foreign key to
-a shipping method table.
+a shipping method table. Order table and products table are in a many to many relationship, so the product order table acts as an associative table. Each product is linked to a category so products table has a foreign key to category. Lastly, each product has one or more discounts and each discount can have one or more products, so these two tables are connected by a product discount table.
 
 1. application/
 * Post: If given a valid form, a new application is saved in model BusinessApplication
@@ -104,3 +104,8 @@ a shipping method table.
 * Delete: If the user is authenticated, this endpoint will delete all shipping addresses associated with the user.
           Returns with status code 200 if delete is successful. If no addresses are found, it responds with a 404
           status code.
+         
+3. account/
+* Patch: If the user is authenticated, the method will take in a new password through a json object and update the user's current password. If successful, a message will show on the accounts page. 
+* Get: Renders the account page.
+* Post: If the user is authenticated, the method will take in a card number and cardholder name through a json object and create a new payment entry into the Payment model. It then updates the customer table with the new payment. A 400 error will occur if the database cannot be accessed and a 403 error will occur if the user is not authenticated
