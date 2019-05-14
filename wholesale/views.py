@@ -603,7 +603,7 @@ def Product_detail_view(request, product_id):
                     return HttpResponse('Could not find discount', status=status.HTTP_400_BAD_REQUEST)
             product_detail_info.save()
             updated_product = Products.objects.all().values().filter(id=product_id)[0]
-            updated_product['category'] = Category.objects.all().values().filter(name = data['category'])[0]
+            updated_product['category'] = Category.objects.all().values().filter(id = updated_product['category_id'])[0]
             updated_product['discounts'] = discount_list
             return JsonResponse(updated_product, safe=False, status = status.HTTP_201_CREATED, 
                                         content_type = 'application/json')
