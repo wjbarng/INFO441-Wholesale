@@ -7,6 +7,9 @@ Endpoints
 
 \` = required
 
+For the "POST", "DELETE", "PATCH" methods, users who are signed as ADMIN have permission.
+For the "GET" method, anyone can call this method even people who are not signed in.
+
 1. api/dicounts
   * "GET" = Displays the list of the discounts that Wholesale offers
   * "POST" = add new data into the Database
@@ -40,6 +43,19 @@ Endpoints
     * image = image of the category`
   * "DELETE" = delete the category
 
+Following fields need to store in the category table using "POST"
+* Pantry & Dry Goods
+* Bath & Facial Tissue
+* Canned Goods
+* Cleaning Products
+* Coffee & Sweeteners
+* Emergency Kits & Supplies
+* Breakroom Serving Supplies
+* Gourmet Foods
+* Paper Towels
+* Snacks
+* Water & Beverages
+
 4. api/products
   * "GET" = displays the list of the products
   * "POST" = Adds new product into the Database
@@ -68,6 +84,7 @@ Endpoints
 
 View pages
 1. products/<product_id> (try 26)
+  * Anyone can access this website
   * Show the product information
 2. products/register
   * Form that 'admin' users can register the project
@@ -99,8 +116,7 @@ a shipping method table. Order table and products table are in a many to many re
 2. shipping/
 * Post: Can only be accessed if user is authenticated. If form is not valid, an error message will show and the
         user remains on the account page. If the form is valid, the shipping address information is saved in the
-        ShippingAddress model. A success message will show and the account page will populate with the shipping info. 
-        The shipping information that the user has to input into the form includes email, first and last name, address, city, state, zip and phone number.
+        ShippingAddress model. A success message will show and the account page will populate with the shipping info.
 * Get: Renders the account page
 * Delete: If the user is authenticated, this endpoint will delete all shipping addresses associated with the user.
           Returns with status code 200 if delete is successful. If no addresses are found, it responds with a 404
