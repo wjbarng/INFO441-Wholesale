@@ -43,7 +43,7 @@ For the "GET" method, anyone can call this method even people who are not signed
     * image = image of the category`
   * "DELETE" = delete the category
 
-Following fields need to store in the category table using "POST"
+Following fields need to store in the category table using "POST" before using products and products register page.
 * Pantry & Dry Goods
 * Bath & Facial Tissue
 * Canned Goods
