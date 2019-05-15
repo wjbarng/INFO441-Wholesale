@@ -99,7 +99,8 @@ a shipping method table. Order table and products table are in a many to many re
 2. shipping/
 * Post: Can only be accessed if user is authenticated. If form is not valid, an error message will show and the
         user remains on the account page. If the form is valid, the shipping address information is saved in the
-        ShippingAddress model. A success message will show and the account page will populate with the shipping info.
+        ShippingAddress model. A success message will show and the account page will populate with the shipping info. 
+        The shipping information that the user has to input into the form includes email, first and last name, address, city, state, zip and phone number.
 * Get: Renders the account page
 * Delete: If the user is authenticated, this endpoint will delete all shipping addresses associated with the user.
           Returns with status code 200 if delete is successful. If no addresses are found, it responds with a 404
