@@ -4,7 +4,7 @@
 {% block content %}
 <h3>Create Account</h3>
 
-<form method="POST" action=" {% url 'register' %}">
+<form method="POST" action="{% url 'register' %}">
     <!-- Add cross site request forgery token -->
     {% csrf_token %}
     {{ form.as_p }}

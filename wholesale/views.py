@@ -7,9 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from rest_framework.decorators import api_view
 from rest_framework import viewsets
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
@@ -17,21 +15,37 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 from decimal import Decimal
 from django.db import DatabaseError
-
 import json
 import datetime
 
+""" Web scraping """
+from bs4 import BeautifulSoup
+import requests
+
 
 DatabaseErrorMessage = "Error interacting with database."
+""" web page to scrape from """
+page = 'https://www.directliquidation.com/liquidation-102/top-5-benefits-buying-wholesale-merchandise-discounted-retailer-business/'
 
 @csrf_exempt
 def homepage(request):
-	return render(request, "index.html", {})
+    page_response = requests.get(page, timeout=5)
+    page_content = BeautifulSoup(page_response.content, "html.parser")
+    return render(request, "index.html", {'title1': page_content.find_all("h2")[0].get_text(), 'content1': page_content.find_all("p")[1].get_text(), 
+                                          'title2': page_content.find_all("h2")[1].get_text(), 'content2': page_content.find_all("p")[5].get_text(),
+                                          'title3': page_content.find_all("h2")[2].get_text(), 'content3': page_content.find_all("p")[7].get_text(),
+                                          'title4': page_content.find_all("h2")[3].get_text(), 'content4': page_content.find_all("p")[11].get_text(),
+                                          'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text() })
 
 @csrf_exempt
 def products(request):
     if (request.method == "GET"):
         return render(request, "products.html", {})
+
+@csrf_exempt
+def pantry(request):
+    if (request.method == "GET"):
+        return render(request, "category/pantry.html", {'products': Products.objects.filter(category = 1)})
 
 @csrf_exempt
 def product_detail(request, product_id):
@@ -212,14 +226,25 @@ def account(request):
         else:
             return HttpResponse(status = status.HTTP_403_FORBIDDEN)
     elif request.method == 'GET':
-        return render(request, "account.html", {'shippingForm': ShippingAddressForm})
+        paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(id = request.user.id)
+        print(Customers.objects.get(id = request.user.id))
+        if paymentid.exists():
+            paymentInfo = Payment.objects.get(id = paymentid)
+        else:
+            paymentInfo = None
+        #paymentInfo = Payment.objects.all()
+        return render(request, "account.html", {'shippingForm': ShippingAddressForm, 'payment': paymentInfo})
     elif request.method == 'POST':
         if request.user.is_authenticated:
             number = request.POST['cardNumber']
             name = request.POST['name']
             try:
+                """ Create new card entry and delete old card entry """
                 payment = Payment.objects.create(CardNumber = number, Name = name)
                 payment.save()
+                paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(id = request.user.id)
+                if paymentid.exists():
+                    Payment.objects.filter(id = paymentid).delete()
             except DatabaseError:
                 return HttpResponse(DatabaseErrorMessage, status=400)
             """ Update customer table with new payment """
@@ -240,7 +265,6 @@ def account(request):
     form on get """
 """ Stanley worked on this function"""
 @csrf_exempt
-@api_view(['GET', 'POST'])
 def signin(request):
     """ Sign user in on post, update password on patch, or get sign in 
     form on get """
@@ -270,7 +294,6 @@ def signout(request):
     and gets the register form on get """
 """ Stanley worked on this function"""
 @csrf_exempt
-@api_view(['GET', 'POST', 'DELETE'])
 def register(request):
     """ Registers a new individual user on post, deletes user on delete,
     and gets the register form on get """

@@ -29,4 +29,5 @@ urlpatterns = [
     path('account/', views.account, name='account'),
     path('shipping/', views.shipping, name='shipping'),
     path('application/', views.application, name='application'),
+    path('products/pantry', views.pantry, name='pantry'),
 ]

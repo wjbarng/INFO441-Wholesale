@@ -1,2 +1,113 @@
 {% extends 'base.html' %}
 {% block title %} Products {% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="container">
+  <div class="d-flex flex-column">
+    <div class="d-flex">
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/peanut_butter.jpg" %}" alt="Pantry & Dry Goods">
+          <div class="card-body">
+            <h2 class="card-title">Pantry & Dry Goods</h2>
+          </div>
+        </div>
+      </a>
+
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/tissue.jpg" %}" alt="Bath and Facial Tissues">
+          <div class="card-body">
+            <h2 class="card-title">Bath and Facial Tissues</h2>
+          </div>
+        </div>
+      </a>
+
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/canned_good.jpeg" %}" alt="Canned Goods">
+          <div class="card-body">
+            <h2 class="card-title">Canned Goods</h2>
+          </div>
+        </div>
+      </a>
+
+
+
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/dish_detergent.jpg" %}" alt="Cleaning Products">
+          <div class="card-body">
+            <h2 class="card-title">Cleaning Products</h2>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="d-flex">
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/coffee.jpg" %}" alt="Coffee & Sweeteners">
+          <div class="card-body">
+            <h2 class="card-title">Coffee & Sweeteners</h2>
+          </div>
+        </div>
+      </a>
+
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/mountain_house.jpg" %}" alt="Emergency Kits & Supplies">
+          <div class="card-body">
+            <h2 class="card-title">Emergency Kits & Supplies</h2>
+          </div>
+        </div>
+      </a>
+
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/paper_towel.jpg" %}" alt="Paper Towels">
+          <div class="card-body">
+            <h2 class="card-title">Paper Towels</h2>
+          </div>
+        </div>
+      </a>
+
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/break_room.jpg" %}" alt="Breakroom Serving Supplies">
+          <div class="card-body">
+            <h2 class="card-title">Breakroom Serving Supplies</h2>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="d-flex">
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/cheese.jpg" %}" alt="Gourmet Foods">
+          <div class="card-body">
+            <h2 class="card-title">Gourmet Foods</h2>
+          </div>
+        </div>
+      </a>
+
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/snacks.jpg" %}" alt="Snacks">
+          <div class="card-body">
+            <h2 class="card-title">Snacks</h2>
+          </div>
+        </div>
+      </a>
+      <a href="{% url 'pantry' %}">
+        <div class="card d-inline-block" style="width: 18rem;">
+          <img class="card-img-top" src="{% static "images/water.jpg" %}" alt="Water & Beverages">
+          <div class="card-body">
+            <h2 class="card-title">Water & Beverages</h2>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

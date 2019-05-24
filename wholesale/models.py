@@ -7,7 +7,6 @@ class Discount(models.Model):
     percentage = models.FloatField(default=0.00)
     minQuan = models.IntegerField(default=0)
     maxQuan = models.IntegerField(default=sys.maxsize)
-    disShipping = models.FloatField(default=0.00)
 
 class Payment(models.Model):
     CardNumber = models.IntegerField()
@@ -33,8 +32,6 @@ class Category(models.Model):
         ('Water & Beverages', 'Water & Beverages'),
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
-    description = models.CharField(default="", max_length=250)
-    image = models.ImageField(null=True)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)

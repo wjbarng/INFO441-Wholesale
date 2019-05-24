@@ -13,8 +13,12 @@
 <hr>
 
 <h4>Payment Methods</h4>
-<p>Card number: {{ number }}</p>
-<p>Cardholder name: {{ name }}</p>
+<p>Only one online payment method may be stored at a time.</p>
+{{payment}}
+{% if payment %}
+    <p>Card number: {{ payment.CardNumber }}</p>
+    <p>Cardholder name: {{ payment.Name }}</p>
+{% endif %}
 <form method="POST">
     {% csrf_token %}
     <div class="form-group">
