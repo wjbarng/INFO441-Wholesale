@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %} Payment {% endblock %}
+
+{% block content %}
+
+
+<h4>Payment Method</h4>
+<p>Only one online payment method may be stored at a time.</p></br>
+
+<p>Card number: {{ number }}</p>
+<p>Cardholder name: {{ name }}</p>
+
+<hr>
+<form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="cardNumber">Card Number</label>
+        <input type="number" class="form-control" id="cardNumber" name="cardNumber" required>
+    </div>
+    <div class="form-group">
+        <label for="name">Cardholder Name</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Save Card</button>
+</form>
+
+
+{% endblock %}
