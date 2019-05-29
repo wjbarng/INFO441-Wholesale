@@ -14,8 +14,9 @@ class RegistrationForm(forms.Form):
     custZip = forms.CharField(label='Zip', max_length=30, required=True)
     custPhone = forms.CharField(label='Phone Number', max_length=30, required=True)
     LEVEL_CHOICES = (
-        (1, 'admin'),
-        (2, 'buyer')
+        (1, 'individual'),
+        (2, 'business'),
+        (3, 'admin')
     )
     custLevel = forms.ChoiceField(required=True, choices=LEVEL_CHOICES)
 
@@ -45,7 +46,7 @@ class ProductRegistrationForm(forms.Form):
     )
     name = forms.CharField(label='Name', max_length=50, required=True)
     description = forms.CharField(label='Description', max_length=100)
-    image = forms.ImageField(required=False)
+    image = forms.URLField(required=False, max_length=200)
     price = forms.FloatField(required=True)
     category = forms.ChoiceField(required=True, choices=CATEGORY_CHOICES)
     max_quantity = forms.IntegerField(required=True)

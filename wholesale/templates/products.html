@@ -23,12 +23,12 @@
     <h1>Products</h1>
     <div class="row">
         {% for product in products %}
-        <div class="card" style="width: 18rem; height: 18rem;margin: 0.5rem">
-            <img class="card-img-top" src=".../100px180/" alt="Card image cap" style="height: 10rem;">
+        <div class="card" style="width: 18rem; height: 18rem; margin: 0.5rem;">
+            <img class="card-img-top" src={{ product.image }} alt="Card image cap" style="height: 10rem;"copyright="cc-by The Cat">
             <div class="card-body">
             <h5 class="card-title">{{ product.name }}</h5>
             <h6> ${{ product.price }}</h6>
-            <a href="{% url 'product detail' product_id=product.id %}" class="btn btn-primary">Go somewhere</a>
+            <a href="{% url 'product detail' category_id=product.category.id product_id=product.id %}" class="btn btn-primary">Go somewhere</a>
             </div>
         </div>
         {% endfor %}

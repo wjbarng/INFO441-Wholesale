@@ -25,20 +25,45 @@ import datetime
 DatabaseErrorMessage = "Error interacting with database."
 
 @csrf_exempt
+def default_category():
+    categories = {
+        'Pantry & Dry Goods':"images/peanut_butter.jpg",
+        'Bath & Facial Tissue':"images/tissue.jpg",
+        'Canned Goods':"images/canned_good.jpeg",
+        'Cleaning Products':"images/dish_detergent.jpg",
+        'Coffee & Sweeteners':"images/coffee.jpg",
+        'Emergency Kits & Supplies':"images/mountain_house.jpg",
+        'Breakroom Serving Supplies':"images/break_room.jpg",
+        'Gourmet Foods':"images/cheese.jpg",
+        'Paper Towels':"images/paper_towel.jpg",
+        'Snacks':"images/snacks.jpg",
+        'Water & Beverages':"images/water.jpg"
+    }
+    exist_category = [one['name'] for one in list(Category.objects.all().values())]
+    for category in categories:
+        if (category not in exist_category):
+            new_category = Category(name=category, image=categories[category])
+            new_category.save()
+    print(Category.objects.all().values())
+default_category()
+
+@csrf_exempt
 def homepage(request):
 	return render(request, "index.html", {})
 
 @csrf_exempt
-def products(request, category_name):
+def products(request, category_id):
     if (request.method == "GET"):
-        products = Products.objects.all()
+        products = Products.objects.all().filter(category = category_id)
         # return render(request, "products.html", {'products':products})
         return render(request,'products.html', {'products':products})
 
 @csrf_exempt
 def categories(request):
      if (request.method == "GET"):
-        return render(request,'category.html')
+        categories = Category.objects.all()
+        print(categories)
+        return render(request,'category.html', {'categories':categories})
 
 @csrf_exempt
 def product_detail(request, product_id, category_id):
@@ -64,7 +89,7 @@ def product_regi(request):
     if (request.method == "POST"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -504,12 +529,11 @@ def Product_view(request):
         try:
             print("hieel")
             # check if the data is valid
-            print(request.FILES["image"])
             data = json.loads(request.body.decode('utf-8'))
             if ('description' not in data.keys()):
                 data['description'] = ""
             if ('image' not in data.keys()):
-                data['image'] = None
+                data['image'] = ""
             try:
                 # connecting foerign key with Category
                 category = Category.objects.all().filter(name = data['category'])[0]
