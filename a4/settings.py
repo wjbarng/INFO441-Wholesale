@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     # 'wholesale',
     'wholesale.apps.WholesaleConfig',
-    'bootstrap4',
 
 ]
 
