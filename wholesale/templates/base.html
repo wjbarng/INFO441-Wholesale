@@ -6,10 +6,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+  {% load static %}
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  <title>{% block title %}Hello, world!{% endblock %}</title>
+  <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+  <title>{% block title %}Wholesale{% endblock %}</title>
 </head>
 
 <body>
@@ -34,23 +36,25 @@
           <a class="nav-link" href="{% url 'category' %}">Products</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'wholesale' %}">Wholesale</a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link" href="{% url 'about' %}">About</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'support' %}">Support</a>
         </li>
         {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'cart' %}">Cart</a>
+        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">
-            Hello {{ user.username }}
+            My Account
           </a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
             <a class="dropdown-item" href="{% url 'account' %}">Account</a>
-            <a class="dropdown-item" >Your order</a>
+            <a class="dropdown-item" href="{% url 'payment' %}">Payment</a>
+            <a class="dropdown-item" href="{% url 'shipping' %}">Shipping</a>
+            <a class="dropdown-item">Your order</a>
             <a class="dropdown-item" href="{% url 'signout' %}">Sign out</a>
           </div>
         </li>
