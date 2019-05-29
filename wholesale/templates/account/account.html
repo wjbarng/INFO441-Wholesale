@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %} Account {% endblock %}
+
+{% block content %}
+
+<h4>Account Details</h4>
+{% if customer.custLevel == 1 %}
+    <p>First Name: {{ customer.custFName }}</p>
+    <p>Last Name: {{ customer.custLName }}</p>
+{% else %}
+    <p>Business Name: {{ customer.businessName }}</p>
+{% endif %}
+<p>Email: {{ user.email }}</p>
+<p>Address: {{ customer.custAddress }}</p>
+<p>City: {{ customer.custCity }}</p>
+<p>State: {{ customer.custState }}</p>
+<p>Zip: {{ customer.custZip }}</p>
+<p>Phone: {{ customer.custPhone }}</p>
+
+
+{% endblock %}

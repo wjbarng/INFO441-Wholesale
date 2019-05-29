@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %} Pantry & Dry Goods {% endblock %}
+
+{% block content %}
+<h1>Pantry & Dry Goods </h1>
+
+{% for product in products %}
+
+<img src={{ product.image }} alt="user image"/>
+<h1>name: {{ product.name }}</h1>
+<h2>description: {{ product.description }}</h2>
+<ul>
+    <li>price: {{ product.price }}</li>
+    <li>max_quantity: {{ product.max_quantity }} </li>
+    <li>min_quantity_retail: {{ product.min_quantity_retail }} </li>
+</ul>
+
+{% endfor %}
+
+{% endblock %}
