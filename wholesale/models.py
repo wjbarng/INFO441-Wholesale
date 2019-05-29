@@ -98,16 +98,6 @@ class Prod_order(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
 
 
-  
-
-# Keeping this for the future
-# class Seller(models.Model):
-#     username = models.CharField(max_length=30)
-#     password = models.CharField(max_length=30)
-#     first_name = models.CharField(max_length=30)
-#     last_name = models.CharField(max_length=30)
-
-
 class BusinessApplication(models.Model):
     busName = models.CharField(max_length=30)
     busAddress = models.CharField(max_length=30)
