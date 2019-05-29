@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 from django.contrib.auth.models import User
@@ -25,16 +25,48 @@ import datetime
 DatabaseErrorMessage = "Error interacting with database."
 
 @csrf_exempt
+def default_category():
+    categories = {
+        'Pantry & Dry Goods':"images/peanut_butter.jpg",
+        'Bath & Facial Tissue':"images/tissue.jpg",
+        'Canned Goods':"images/canned_good.jpeg",
+        'Cleaning Products':"images/dish_detergent.jpg",
+        'Coffee & Sweeteners':"images/coffee.jpg",
+        'Emergency Kits & Supplies':"images/mountain_house.jpg",
+        'Breakroom Serving Supplies':"images/break_room.jpg",
+        'Gourmet Foods':"images/cheese.jpg",
+        'Paper Towels':"images/paper_towel.jpg",
+        'Snacks':"images/snacks.jpg",
+        'Water & Beverages':"images/water.jpg"
+    }
+    exist_category = [one['name'] for one in list(Category.objects.all().values())]
+    for category in categories:
+        if (category not in exist_category):
+            new_category = Category(name=category, image=categories[category])
+            new_category.save()
+    print(Category.objects.all().values())
+default_category()
+
+@csrf_exempt
 def homepage(request):
 	return render(request, "index.html", {})
 
 @csrf_exempt
-def products(request):
+def products(request, category_id):
     if (request.method == "GET"):
-        return render(request, "products.html", {})
+        products = Products.objects.all().filter(category = category_id)
+        # return render(request, "products.html", {'products':products})
+        return render(request,'products.html', {'products':products})
 
 @csrf_exempt
-def product_detail(request, product_id):
+def categories(request):
+     if (request.method == "GET"):
+        categories = Category.objects.all()
+        print(categories)
+        return render(request,'category.html', {'categories':categories})
+
+@csrf_exempt
+def product_detail(request, product_id, category_id):
     """ This is a view page for the product detail """
     if (request.method == "GET"):
         try:
@@ -57,7 +89,7 @@ def product_regi(request):
     if (request.method == "POST"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -67,23 +99,36 @@ def product_regi(request):
             try:
                 try:
                     # connecting foerign key with Category
-                    category = Category.objects.all().filter(name = clean_data['category'])[0]
+                    Category.objects.all().delete()
+                    category = Category.objects.all().filter(name = clean_data['category'])
+                    print(category)
+                    if(not category.exists()):
+                        print("test1")
+                        Category(name = clean_data['category'], description="", image=None).save()
+                        print(Category.objects.all().values())
+                        category = Category.objects.all().filter(name = clean_data['category'])
+                        print(category)
+                    print("test2")
                 except:
                     return HttpResponse('Check category name', 
                         status=status.HTTP_400_BAD_REQUEST)
+                print(category)
                 new_product = Products(name = clean_data['name'],
                                     description = clean_data['description'],
                                     image = clean_data['image'],
                                     price = clean_data['price'],
                                     category = category,
                                     max_quantity = clean_data['max_quantity'],
-                                    min_quantity_retail = clean_data['min_quantity_retail'])
+                                    min_quantity_retail = clean_data['min_quantity_retail'],
+                                    discount = [])
                 new_product.save()
+                print("success")
+                # add discount
                 messages.success(request,('You have successfully registered'))
                 return render(request, "products.html")
             except:
                 messages.error(request,('Could not register product'))
-                return HttpResponseRedirect('registerProduct')
+                return render(request, "products.html")
         else:
             messages.error(request,('Form not valid'))
             HttpResponseRedirect('registerProduct')
@@ -469,6 +514,7 @@ def Product_view(request):
     """ THis view is an API for products, see documentation for more detail"""
     if (request.method == "GET"):
         all_products = list(Products.objects.all().values())
+        print(all_products)
         # change the category id to category
         for product in all_products:
             product['category'] = list(Category.objects.all().values().filter(id = product['category_id']))
@@ -481,18 +527,20 @@ def Product_view(request):
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
+            print("hieel")
             # check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if ('description' not in data.keys()):
                 data['description'] = ""
             if ('image' not in data.keys()):
-                data['image'] = None
+                data['image'] = ""
             try:
                 # connecting foerign key with Category
                 category = Category.objects.all().filter(name = data['category'])[0]
             except:
                 return HttpResponse('Check category name', 
                         status=status.HTTP_400_BAD_REQUEST)
+            print("hihi")
             new_product = Products(name = data['name'],
                                     description = data['description'],
                                     image = data['image'],
@@ -501,6 +549,7 @@ def Product_view(request):
                                     max_quantity = data['max_quantity'],
                                     min_quantity_retail = data['min_quantity_retail'])
             new_product.save()
+            print("hi")
             discount_list = []
             # connects many-to-many relationship with discounts
             for discount in data['discount']:

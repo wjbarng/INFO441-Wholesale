@@ -33,13 +33,12 @@ class Category(models.Model):
         ('Water & Beverages', 'Water & Beverages'),
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
-    description = models.CharField(default="", max_length=250)
-    image = models.ImageField(null=True)
+    image = models.CharField(default="", null=False, max_length=300)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)
     description = models.CharField(default="", max_length=250)
-    image = models.ImageField(null=True)
+    image = models.URLField(null=True, max_length=200)
     price = models.FloatField(default=0.00)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
