@@ -42,7 +42,7 @@ class Products(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
     min_quantity_retail = models.IntegerField(default=0)
-    discount = models.ManyToManyField(Discount, through='Prod_dis')
+    discount = models.ManyToManyField(Discount, null=True, through='Prod_dis')
 
 class Prod_dis(models.Model):
     products = models.ForeignKey(Products, on_delete=models.CASCADE)
@@ -63,8 +63,8 @@ class Customers(models.Model):
 
 class Cart(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
-    prodName = models.CharField(max_length=50)
-    prodPrice = models.FloatField(default=0.00)
+    prodName = models.ForeignKey(Products, on_delete=models.CASCADE)
+    # prodPrice = models.FloatField(default=0.00)
     prodQuantity = models.IntegerField()
 
 class ShippingAddress(models.Model):

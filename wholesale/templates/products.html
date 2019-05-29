@@ -28,7 +28,7 @@
             <div class="card-body">
             <h5 class="card-title">{{ product.name }}</h5>
             <h6> ${{ product.price }}</h6>
-            <a href="{% url 'product detail' category_id=product.category.id product_id=product.id %}" class="btn btn-primary">Go somewhere</a>
+            <a href="{% url 'product detail' category_id=product.category.id product_id=product.id %}" class="btn btn-primary">Product Detail</a>
             </div>
         </div>
         {% endfor %}
