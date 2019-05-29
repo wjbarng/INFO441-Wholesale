@@ -38,8 +38,6 @@ def homepage(request):
                                           'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text() })
 
 
-
-
 @csrf_exempt
 def default_category():
     categories = {
@@ -55,14 +53,13 @@ def default_category():
         'Snacks':"images/snacks.jpg",
         'Water & Beverages':"images/water.jpg"
     }
+    # Category.objects.all().delete()
     exist_category = [one['name'] for one in list(Category.objects.all().values())]
-    for category in categories:
+    for category, image in categories.items():
         if (category not in exist_category):
-            new_category = Category(name=category, image=categories[category])
+            new_category = Category(name=category, image=image)
             new_category.save()
-    print(Category.objects.all().values())
 default_category()
-
 
 @csrf_exempt
 def products(request, category_id):
@@ -81,6 +78,8 @@ def categories(request):
 @csrf_exempt
 def product_detail(request, product_id, category_id):
     """ This is a view page for the product detail """
+    print("product_detail")
+    print(request.method)
     if (request.method == "GET"):
         try:
             product = Products.objects.all().filter(id = product_id).values()[0]
@@ -88,7 +87,18 @@ def product_detail(request, product_id, category_id):
             return HttpResponse("Product does not exists.", status=404)
         try:
             category = Category.objects.all().filter(id = product['category_id']).values()[0]
-
+        except:
+            return HttpResponse("Category does not exists.", status=404)
+        return HttpResponse(render(request, "productDetail.html", 
+			{'product':product, 'category':category}), status=200)
+    elif (request.method == "POST"):
+        print("post")
+        try:
+            product = Products.objects.all().filter(id = product_id).values()[0]
+        except:
+            return HttpResponse("Product does not exists.", status=404)
+        try:
+            category = Category.objects.all().filter(id = product['category_id']).values()[0]
         except:
             return HttpResponse("Category does not exists.", status=404)
         return HttpResponse(render(request, "productDetail.html", 
@@ -109,38 +119,38 @@ def product_regi(request):
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
+            # try:
             try:
-                try:
-                    # connecting foerign key with Category
-                    # Category.objects.all().delete()
-                    category = Category.objects.all().filter(name = clean_data['category'])
-                    print(category)
-                    if(not category.exists()):
-                        print("test1")
-                        Category(name = clean_data['category'], image=None).save()
-                        print(Category.objects.all().values())
-                        category = Category.objects.all().filter(name = clean_data['category'])
-                        print(category)
-                    print("test2")
-                except:
-                    return HttpResponse('Check category name', 
-                        status=status.HTTP_400_BAD_REQUEST)
+                # connecting foerign key with Category
+                # Category.objects.all().delete()
+                category = Category.objects.all().filter(name = clean_data['category'])[0]
                 print(category)
-                new_product = Products(name = clean_data['name'],
-                                    description = clean_data['description'],
-                                    image = clean_data['image'],
-                                    price = clean_data['price'],
-                                    category = category,
-                                    max_quantity = clean_data['max_quantity'],
-                                    min_quantity_retail = clean_data['min_quantity_retail'])
-                new_product.save()
-                print("success")
-                # add discount
-                messages.success(request,('You have successfully registered'))
-                return render(request, "products.html")
+                # if(not category.exists()):
+                #     print("test1")
+                #     Category(name = clean_data['category'], image=None).save()
+                #     print(Category.objects.all().values())
+                #     category = Category.objects.all().filter(name = clean_data['category'])
+                #     print(category)
+                # print("test2")
             except:
-                messages.error(request,('Could not register product'))
-                return render(request, "products.html")
+                return HttpResponse('Check category name', 
+                    status=status.HTTP_400_BAD_REQUEST)
+            print(category)
+            new_product = Products(name = clean_data['name'],
+                                description = clean_data['description'],
+                                image = clean_data['image'],
+                                price = clean_data['price'],
+                                category = category,
+                                max_quantity = clean_data['max_quantity'],
+                                min_quantity_retail = clean_data['min_quantity_retail'])
+            new_product.save()
+            print("success")
+            # add discount
+            messages.success(request,('You have successfully registered'))
+            return render(request, "products.html")
+            # except:
+            #     messages.error(request,('Could not register product'))
+            #     return render(request, "products.html")
         else:
             messages.error(request,('Form not valid'))
             HttpResponseRedirect('registerProduct')
