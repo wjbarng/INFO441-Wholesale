@@ -108,8 +108,19 @@ def product_regi(request):
         return render(request, "registerProduct.html", {'form': ProductRegistrationForm})
 
 @csrf_exempt
-def wholesale(request):
-    return render(request, "wholesale.html", {})
+def cart(request):
+    u = User.objects.get(id = request.user.id)
+    customer = u.customers
+    if request.method == 'GET':
+        address = ShippingAddress.objects.filter(custID=customer)
+        paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(user = request.user)
+        if paymentid[0] is not None:
+            number = Payment.objects.values_list('CardNumber', flat = True).get(id=list(paymentid)[0])
+            name = Payment.objects.values_list('Name', flat = True).get(id=list(paymentid)[0])
+        else:
+            number = 'Please set a credit card number'
+            name = 'Please set a credit card name'
+        return render(request, "cart.html", {'ship': address, 'number': number, 'name': name})
 
 @csrf_exempt
 def about(request):
@@ -189,11 +200,13 @@ def shipping(request):
         customer = u.customers
         if request.method == 'GET':
             address = ShippingAddress.objects.filter(custID=customer)
-            print(address)
-            return render(request, 'account/shipping.html', {"ship": address})
+            return render(request, 'account/shipping.html', {"ship": address, "customer": customer})
         elif request.method == "POST":
-            first = request.POST['firstName']
-            last = request.POST['lastName']
+            if customer.custLevel == 1:
+                first = request.POST['firstName']
+                last = request.POST['lastName']
+            else:
+                business = request.POST['businessName']
             address = request.POST['address']
             city = request.POST['city']
             state = request.POST['state']
@@ -202,15 +215,22 @@ def shipping(request):
             try:
                 if ShippingAddress.objects.filter(custID=customer).count():
                     ShippingAddress.objects.filter(custID=customer).delete()
-                shippingAddress = ShippingAddress.objects.create(custID=customer, shipAddFname = first,
-                                    shipAddLname = last, shipAddAddress = address, shipAddCity = city,
-                                    shipAddState = state, shipAddZip = shipZip, shipAddPhone = number)
+                if customer.custLevel == 1:
+                    shippingAddress = ShippingAddress.objects.create(custID=customer, shipAddFname = first,
+                                        shipAddLname = last, shipAddAddress = address, shipAddCity = city,
+                                        shipAddState = state, shipAddZip = shipZip, shipAddPhone = number)
+                else:
+                     shippingAddress = ShippingAddress.objects.create(custID=customer, businessName = business, 
+                                                                      shipAddAddress = address, shipAddCity = city,
+                                                                      shipAddState = state, shipAddZip = shipZip, shipAddPhone = number)
                 shippingAddress.save()
+                print(ShippingAddress.objects.all().values())
             except DatabaseError:
                 return HttpReponse(DatabaseErrorMessage, status=400)
             messages.success(request,('Address saved'))
-            address = ShippingAddress.objects.filter(custID=customer)
-            return render(request, "account/shipping.html", {"ship": address})
+            address = ShippingAddress.objects.filter(custID_id=customer)
+            print(address)
+            return render(request, "account/shipping.html", {"ship": address, "customer": customer})
         elif request.method == "DELETE":
             if request.user.is_authenticated:
                 u = User.objects.get(id = request.user.id)

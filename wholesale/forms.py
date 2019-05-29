@@ -14,8 +14,9 @@ class RegistrationForm(forms.Form):
     custZip = forms.CharField(label='Zip', max_length=30, required=True)
     custPhone = forms.CharField(label='Phone Number', max_length=30, required=True)
     LEVEL_CHOICES = (
-        (1, 'admin'),
-        (2, 'buyer')
+        (1, 'individual'),
+        (2, 'business'),
+        (3, 'retail')
     )
     custLevel = forms.ChoiceField(required=True, choices=LEVEL_CHOICES)
 

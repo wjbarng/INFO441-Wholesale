@@ -7,9 +7,12 @@
 
 {% if ship|length > 0 %}
 {% for value in ship %}
-
+{% if customer.custLevel == 1 %}
 <p>First name: {{ value.shipAddFname }}</p>
 <p>Last name: {{ value.shipAddLname }}</p>
+{% else %}
+<p>Business name: {{ value.businessName }}</p>
+{% endif %}
 <p>Address: {{ value.shipAddAddress }}</p>
 <p>City: {{ value.shipAddCity }}</p>
 <p>State: {{ value.shipAddState }}</p>
@@ -25,6 +28,7 @@
 <hr>
 <form method="POST" action=" {% url 'shipping' %}">
     {% csrf_token %}
+    {% if customer.custLevel == 1%}
     <div class="form-group">
         <label for="firstName">First Name</label>
         <input type="text" class="form-control" name="firstName" required>
@@ -33,6 +37,12 @@
         <label for="lastName">Last Name</label>
         <input type="text" class="form-control" name="lastName" required>
     </div>
+    {% else %}
+    <div class="form-group">
+        <label for="businessName">Business Name</label>
+        <input type="text" class="form-control" name="businessName" required>
+    </div>
+    {% endif %}
     <div class="form-group">
         <label for="address">Address</label>
         <input type="text" class="form-control" name="address" required>

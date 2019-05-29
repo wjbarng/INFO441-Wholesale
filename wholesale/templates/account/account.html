@@ -4,7 +4,7 @@
 {% block content %}
 
 <h4>Account Details</h4>
-{% if customer.custLName is not None %}
+{% if customer.custLevel == 1 %}
     <p>First Name: {{ customer.custFName }}</p>
     <p>Last Name: {{ customer.custLName }}</p>
 {% else %}

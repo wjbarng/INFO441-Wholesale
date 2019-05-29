@@ -58,13 +58,13 @@ class Customers(models.Model):
     custPhone = models.CharField(max_length = 20)
     businessName = models.CharField(null = True, max_length=50)
     PaymentID = models.ForeignKey(Payment, null=True, on_delete=models.CASCADE)
-    custLevel = models.IntegerField(default = 1)
+    custLevel = models.IntegerField(default = 1) 
 
-    def save(self, *args, **kwargs):
-        if self.custFName is not None and self.custLName is not None and self.businessName is None:
-            super(Customers, self).save(*args, **kwargs)
-        elif self.custFName is not None and self.custLName is not None and self.businessName is None:
-            super(Customers, self).save(*args, **kwargs)
+class Cart(models.Model):
+    customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
+    prodName = models.CharField(max_length=50)
+    prodPrice = models.FloatField(default=0.00)
+    prodQuantity = models.IntegerField()
 
 class ShippingAddress(models.Model):
     custID = models.ForeignKey(Customers, on_delete=models.CASCADE)
@@ -77,11 +77,6 @@ class ShippingAddress(models.Model):
     shipAddZip = models.CharField(max_length = 20)
     shipAddPhone = models.CharField(max_length = 20)
 
-    def save(self, *args, **kwargs):
-        if self.shipAddFname is not None and self.shipAddLname is not None and self.businessName is None:
-            super(ShippingAddress, self).save(*args, **kwargs)
-        elif self.shipAddFname is not None and self.shipAddLname is not None and self.businessName is None:
-            super(ShippingAddress, self).save(*args, **kwargs)
 
 class Order(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
