@@ -37,18 +37,50 @@ def homepage(request):
                                           'title4': page_content.find_all("h2")[3].get_text(), 'content4': page_content.find_all("p")[11].get_text(),
                                           'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text() })
 
-@csrf_exempt
-def products(request):
-    if (request.method == "GET"):
-        return render(request, "products.html", {})
+
+
 
 @csrf_exempt
-def pantry(request):
-    if (request.method == "GET"):
-        return render(request, "category/pantry.html", {'products': Products.objects.filter(category = 1)})
+def default_category():
+    categories = {
+        'Pantry & Dry Goods':"images/peanut_butter.jpg",
+        'Bath & Facial Tissue':"images/tissue.jpg",
+        'Canned Goods':"images/canned_good.jpeg",
+        'Cleaning Products':"images/dish_detergent.jpg",
+        'Coffee & Sweeteners':"images/coffee.jpg",
+        'Emergency Kits & Supplies':"images/mountain_house.jpg",
+        'Breakroom Serving Supplies':"images/break_room.jpg",
+        'Gourmet Foods':"images/cheese.jpg",
+        'Paper Towels':"images/paper_towel.jpg",
+        'Snacks':"images/snacks.jpg",
+        'Water & Beverages':"images/water.jpg"
+    }
+    exist_category = [one['name'] for one in list(Category.objects.all().values())]
+    for category in categories:
+        if (category not in exist_category):
+            new_category = Category(name=category, image=categories[category])
+            new_category.save()
+    print(Category.objects.all().values())
+default_category()
+
 
 @csrf_exempt
-def product_detail(request, product_id):
+def products(request, category_id):
+    if (request.method == "GET"):
+        products = Products.objects.all().filter(category = category_id)
+        # return render(request, "products.html", {'products':products})
+        return render(request,'products.html', {'products':products})
+
+@csrf_exempt
+def categories(request):
+     if (request.method == "GET"):
+        categories = Category.objects.all()
+        print(categories)
+        return render(request,'category.html', {'categories':categories})
+
+@csrf_exempt
+def product_detail(request, product_id, category_id):
+    """ This is a view page for the product detail """
     if (request.method == "GET"):
         try:
             product = Products.objects.all().filter(id = product_id).values()[0]
@@ -70,7 +102,7 @@ def product_regi(request):
     if (request.method == "POST"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -80,23 +112,36 @@ def product_regi(request):
             try:
                 try:
                     # connecting foerign key with Category
-                    category = Category.objects.all().filter(name = clean_data['category'])[0]
+                    Category.objects.all().delete()
+                    category = Category.objects.all().filter(name = clean_data['category'])
+                    print(category)
+                    if(not category.exists()):
+                        print("test1")
+                        Category(name = clean_data['category'], description="", image=None).save()
+                        print(Category.objects.all().values())
+                        category = Category.objects.all().filter(name = clean_data['category'])
+                        print(category)
+                    print("test2")
                 except:
                     return HttpResponse('Check category name', 
                         status=status.HTTP_400_BAD_REQUEST)
+                print(category)
                 new_product = Products(name = clean_data['name'],
                                     description = clean_data['description'],
                                     image = clean_data['image'],
                                     price = clean_data['price'],
                                     category = category,
                                     max_quantity = clean_data['max_quantity'],
-                                    min_quantity_retail = clean_data['min_quantity_retail'])
+                                    min_quantity_retail = clean_data['min_quantity_retail'],
+                                    discount = [])
                 new_product.save()
+                print("success")
+                # add discount
                 messages.success(request,('You have successfully registered'))
                 return render(request, "products.html")
             except:
                 messages.error(request,('Could not register product'))
-                return HttpResponseRedirect('registerProduct')
+                return render(request, "products.html")
         else:
             messages.error(request,('Form not valid'))
             HttpResponseRedirect('registerProduct')
@@ -122,7 +167,7 @@ def support(request):
      
 
 """ Post a new business application or delete an application by business name """
-""" Stanley worked on this function"""
+""" Stanley worked on this function, app did not work when I removed this function"""
 @csrf_exempt
 def application(request):
     if request.method == 'GET':
@@ -160,7 +205,7 @@ def application(request):
 
 
 """ Creates new address for shipping or deletes address associated with user """
-""" Stanley worked on this function"""
+""" Stanley worked on this function, App does not work without this function"""
 @csrf_exempt
 def shipping(request):
     if request.method == 'GET':
@@ -207,7 +252,7 @@ def shipping(request):
     
 
 """ Update and create new account information """
-""" Stanley worked on this function"""
+""" Stanley worked on this function, app does not work without this function"""
 @csrf_exempt
 def account(request):
     """ Update and create new account information """
@@ -252,7 +297,6 @@ def account(request):
             customer = u.customers
             customer.PaymentId = payment
             customer.save()
-
             messages.success(request,('Card saved'))
             return render(request, "account.html", {'number': number, 'name': name, 'shippingForm': ShippingAddressForm})
         else:
@@ -326,7 +370,7 @@ def register(request):
 
 @csrf_exempt
 def Category_view(request):
-    """ This view is an API for the categories"""
+    """ This view is an API for the categories, see readme for documentation"""
     if (request.method == "GET"):
         all_category = list(Category.objects.all().values())
         return JsonResponse(all_category, safe=False, status=status.HTTP_200_OK)
@@ -362,7 +406,7 @@ def Category_view(request):
 
 @csrf_exempt
 def Category_detail_view(request, category_id):
-    """ This view is an API for the category detail"""
+    """ This view is an API for the category detail, see readme for more information"""
     if (request.method == "GET"):
         try:
             category_info = Category.objects.all().values().get(id = category_id)
@@ -423,7 +467,7 @@ def Category_detail_view(request, category_id):
 
 @csrf_exempt
 def Discount_view(request):
-    """ This view is an API for the discounts"""
+    """ This view is an API for the discounts, see readme for more information"""
     if (request.method == "GET"):
         all_discounts = list(Discount.objects.all().values())
         return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
@@ -438,7 +482,8 @@ def Discount_view(request):
             # get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if (data['minQuan'] > data['maxQuan']):
-                HttpResponse("minQuan cannot be larger than maxQuan", safe=False, status = status.HTTP_404_NOT_FOUND)
+                HttpResponse("minQuan cannot be larger than maxQuan", 
+                            safe=False, status = status.HTTP_404_NOT_FOUND)
             new_discount = Discount(percentage = data['percentage'],
                                     minQuan = data['minQuan'],
                                     maxQuan = data['maxQuan'],
@@ -471,7 +516,8 @@ def Discount_view(request):
             if ('disShipping' in data.keys()):
                 discount.disShipping = data['disShipping']
             if (discount.minQuan > discount.maxQuan):
-                return HttpResponse('minQuan cannot be larger than maxQuan', status=status.HTTP_400_BAD_REQUEST)
+                return HttpResponse('minQuan cannot be larger than maxQuan', 
+                        status=status.HTTP_400_BAD_REQUEST)
             try:
                 discount.save()
             except:
@@ -487,9 +533,10 @@ def Discount_view(request):
 
 @csrf_exempt
 def Product_view(request):
-    """ THis view is an API for products"""
+    """ THis view is an API for products, see documentation for more detail"""
     if (request.method == "GET"):
         all_products = list(Products.objects.all().values())
+        print(all_products)
         # change the category id to category
         for product in all_products:
             product['category'] = list(Category.objects.all().values().filter(id = product['category_id']))
@@ -502,18 +549,20 @@ def Product_view(request):
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
+            print("hieel")
             # check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if ('description' not in data.keys()):
                 data['description'] = ""
             if ('image' not in data.keys()):
-                data['image'] = None
+                data['image'] = ""
             try:
                 # connecting foerign key with Category
                 category = Category.objects.all().filter(name = data['category'])[0]
             except:
                 return HttpResponse('Check category name', 
                         status=status.HTTP_400_BAD_REQUEST)
+            print("hihi")
             new_product = Products(name = data['name'],
                                     description = data['description'],
                                     image = data['image'],
@@ -522,6 +571,7 @@ def Product_view(request):
                                     max_quantity = data['max_quantity'],
                                     min_quantity_retail = data['min_quantity_retail'])
             new_product.save()
+            print("hi")
             discount_list = []
             # connects many-to-many relationship with discounts
             for discount in data['discount']:
@@ -624,7 +674,7 @@ def Product_detail_view(request, product_id):
                     return HttpResponse('Could not find discount', status=status.HTTP_400_BAD_REQUEST)
             product_detail_info.save()
             updated_product = Products.objects.all().values().filter(id=product_id)[0]
-            updated_product['category'] = Category.objects.all().values().filter(name = data['category'])[0]
+            updated_product['category'] = Category.objects.all().values().filter(id = updated_product['category_id'])[0]
             updated_product['discounts'] = discount_list
             return JsonResponse(updated_product, safe=False, status = status.HTTP_201_CREATED, 
                                         content_type = 'application/json')

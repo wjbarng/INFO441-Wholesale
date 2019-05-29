@@ -1,0 +1,9 @@
+<!-- This file created the sign up form -->
+{% block content %}
+  <h2>Register Product</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Register</button>
+  </form>
+{% endblock %}
