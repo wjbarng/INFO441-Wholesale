@@ -99,12 +99,12 @@ def product_regi(request):
             try:
                 try:
                     # connecting foerign key with Category
-                    Category.objects.all().delete()
+                    # Category.objects.all().delete()
                     category = Category.objects.all().filter(name = clean_data['category'])
                     print(category)
                     if(not category.exists()):
                         print("test1")
-                        Category(name = clean_data['category'], description="", image=None).save()
+                        Category(name = clean_data['category'], image=None).save()
                         print(Category.objects.all().values())
                         category = Category.objects.all().filter(name = clean_data['category'])
                         print(category)
@@ -119,8 +119,7 @@ def product_regi(request):
                                     price = clean_data['price'],
                                     category = category,
                                     max_quantity = clean_data['max_quantity'],
-                                    min_quantity_retail = clean_data['min_quantity_retail'],
-                                    discount = [])
+                                    min_quantity_retail = clean_data['min_quantity_retail'])
                 new_product.save()
                 print("success")
                 # add discount
@@ -369,7 +368,6 @@ def Category_view(request):
             try:
                 # create new Category object
                 new_category = Category(name = data['name'],
-                                        description = data['description'],
                                         image = data['image'])
                 # save into the database
                 new_category.save()
@@ -412,8 +410,8 @@ def Category_detail_view(request, category_id):
             data = json.loads(request.body.decode('utf-8'))
             if ('name' in data.keys()):
                 category_info_values.name = data['name']
-            if ('description' in data.keys()):
-                category_info_values.description = data['description']
+            # if ('description' in data.keys()):
+            #     category_info_values.description = data['description']
             if ('image' in data.keys()):
                 category_info_values.image = data['image']
         except:
@@ -452,7 +450,7 @@ def Discount_view(request):
     elif (request.method == "POST"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
