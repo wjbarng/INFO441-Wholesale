@@ -63,8 +63,8 @@ class Customers(models.Model):
 
 class Cart(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
-    prodName = models.CharField(max_length=50)
-    prodPrice = models.FloatField(default=0.00)
+    prodName = models.ForeignKey(Products, on_delete=models.CASCADE)
+    # prodPrice = models.FloatField(default=0.00)
     prodQuantity = models.IntegerField()
 
 class ShippingAddress(models.Model):

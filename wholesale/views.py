@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 from django.contrib.auth.models import User
-from wholesale.models import Customers, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
+from wholesale.models import Customers, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order, Cart
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
@@ -101,6 +101,8 @@ def product_detail(request, product_id, category_id):
             category = Category.objects.all().filter(id = product['category_id']).values()[0]
         except:
             return HttpResponse("Category does not exists.", status=404)
+        print(Cart.objects.all())
+        print(request.POST['quantity'])
         return HttpResponse(render(request, "productDetail.html", 
 			{'product':product, 'category':category}), status=200)
     else:
