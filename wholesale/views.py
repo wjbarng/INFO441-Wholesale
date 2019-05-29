@@ -102,7 +102,40 @@ def product_detail(request, product_id, category_id):
         except:
             return HttpResponse("Category does not exists.", status=404)
         print(Cart.objects.all())
-        print(request.POST['quantity'])
+        print(type(request.POST['quantity']))
+        # cart_item = Cart.objects.all().filter(customer_id = )
+        print(request.user.id)
+        u = User.objects.get(id = request.user.id)
+        customer = u.customers
+        print("test1")
+        product = Products.objects.all().filter(id = product_id)[0]
+        print(Cart.objects.all().filter(customer=customer, prodName=product))
+        print("test2")
+        if (len(Cart.objects.all().filter(customer=customer, prodName=product)) != 0):
+            try:
+                print("test")
+                cart_info = Cart.objects.filter(customer=customer, prodName=product).values()[0]
+                cart_info_values = Cart.objects.get(customer=customer, prodName=product)
+                print(cart_info)
+            except:
+                messages.error(request,('item does not exist'))
+                HttpResponseRedirect('product detail')
+            try:
+                # update the data
+                print("test13")
+                print(type(cart_info['prodQuantity']))
+                print("test15")
+                cart_info_values.prodQuantity = cart_info['prodQuantity'] + int(request.POST['quantity'])
+                print(cart_info['prodQuantity'] + int(request.POST['quantity']))
+                print("test16")
+                cart_info_values.save()
+            except:
+                messages.error(request,('could not update the quantity'))
+                HttpResponseRedirect('product detail')
+        else:
+            new_item = Cart(customer=customer, prodName=product, prodQuantity=request.POST['quantity'])
+            new_item.save()
+        print(Cart.objects.all().values())
         return HttpResponse(render(request, "productDetail.html", 
 			{'product':product, 'category':category}), status=200)
     else:
