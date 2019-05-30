@@ -41,10 +41,6 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     # 'wholesale',
     'wholesale.apps.WholesaleConfig',
-<<<<<<< HEAD
-
-=======
->>>>>>> 1d45565ff8cf8bdbca2b8160721a5cd4b9c462e0
 ]
 
 MIDDLEWARE = [

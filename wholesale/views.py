@@ -2,11 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 from django.contrib.auth.models import User
-<<<<<<< HEAD
 from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
-=======
-from wholesale.models import Customers, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order, Cart
->>>>>>> 1d45565ff8cf8bdbca2b8160721a5cd4b9c462e0
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
@@ -173,16 +169,23 @@ def product_regi(request):
 def cart(request):
     u = User.objects.get(id = request.user.id)
     customer = u.customers
+    address = ShippingAddress.objects.filter(custID=customer)
+    paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(user = request.user)
+    if paymentid[0] is not None:
+        number = Payment.objects.values_list('CardNumber', flat = True).get(id=list(paymentid)[0])
+        name = Payment.objects.values_list('Name', flat = True).get(id=list(paymentid)[0])
+    else:
+        number = 'Please set a credit card number'
+        name = 'Please set a credit card name'
+    products = Cart.objects.filter(customer=customer)
+    priceList = []
+    for prod in products:
+        productPrice = Products.objects.get(name = prod.prodName)
+        priceList.add(productPrice)
     if request.method == 'GET':
-        address = ShippingAddress.objects.filter(custID=customer)
-        paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(user = request.user)
-        if paymentid[0] is not None:
-            number = Payment.objects.values_list('CardNumber', flat = True).get(id=list(paymentid)[0])
-            name = Payment.objects.values_list('Name', flat = True).get(id=list(paymentid)[0])
-        else:
-            number = 'Please set a credit card number'
-            name = 'Please set a credit card name'
-        return render(request, "cart.html", {'ship': address, 'number': number, 'name': name})
+        return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': products, 'price': priceList})
+    # elif request.method == 'POST':
+    #     return render(request, "cart.html", {'ship': address, 'number': number, 'name': name})
 
 @csrf_exempt
 def about(request):
