@@ -194,8 +194,13 @@ def product_regi(request):
             User.objects.filter(id = request.user.id).delete()
             Customers.objects.filter(user = request.user).delete()
     elif request.method == "GET":
+        if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
+            messages.error(request,('You are not authorized'))
+            return redirect(signin)
         return render(request, "registerProduct.html", {'form': ProductRegistrationForm})
-
+    else:
+        return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 @csrf_exempt
 def cart(request):
     u = User.objects.get(id = request.user.id)
