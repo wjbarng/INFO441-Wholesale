@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %} Account {% endblock %}
+
+{% block content %}
+
+<h2>Order History</h2></br>
+{% if order|length > 0 %}
+{% for value in order %}
+<p>Order Date: {{ value.orderDate }}</p>
+<p>Shipped Date: {{ value.shippedDate }}</p>
+<p>Total Price: {{ value.totalPrice }}</p>
+
+<h5>Payment</h5>
+<p>Card Number: {{ value.payment.CardNumber }}</p>
+<p>Card Name: {{ value.payment.Name }}</p>
+
+<h5>Shipping Method</h5>
+<p>Shipping Name: {{ value.shippingMethod.ShipMethDesc }}</p>
+<p>Shipping Price: {{ value.shippingMethod.ShipMethPrice }}</p>
+
+<h5>Shipping Address</h5>
+<p>Address: {{ value.shippingAddress.shipAddAddress }}</p>
+<p>City: {{ value.shippingAddress.shipAddCity }}</p>
+<p>State: {{ value.shippingAddress.shipAddState }}</p>
+<p>Zip: {{ value.shippingAddress.shipAddZip }}</p>
+<hr>
+{% endfor %}
+{% else %}
+<p>No orders have been made</p>
+{% endif %}
+{% endblock %}
+

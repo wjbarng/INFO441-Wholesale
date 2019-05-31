@@ -53,27 +53,43 @@
         {% endif %}
     </div>
     <div>
+        {% if ship|length == 0 or number == 'Please set a credit card number'%}
+        <p>Shipping and payment information must be complete to make purchase</p>
+        {% elif product|length == 0 %}
+        <p>Add products to cart to make purchase</p>
+        {% else %}
         <p>Subtotal: ${{ total }}</p>
-        <form action=" {% url 'cart' %}" method="POST">
+        <form name='form' action=" {% url 'cart' %}" method="POST">
             <div class="radio">
-                <label><input type="radio" name="optradio" value='10' checked>2 day delivery: $10</label>
+                <label><input type="radio" name="optradio" id="two" value='10' checked>2 day delivery: $10</label>
             </div>
             <div class="radio">
-                <label><input type="radio" name="optradio" value='6'>4 day delivery: $6</label>
+                <label><input type="radio" name="optradio" id="four" value='6'>4 day delivery: $6</label>
             </div>
             <div class="radio">
-                <label><input type="radio" name="optradio" value='4'>7 day delivery: $4</label>
+                <label><input type="radio" name="optradio" id="seven" value='4'>7 day delivery: $4</label>
             </div>
-            <h4>Total:</h4>
-            {% if ship|length == 0 or number == 'Please set a credit card number'%}
-            <p>Shipping and payment information must be complete to make purchase</p>
-            {% elif product|length == 0 %}
-            <p>Add products to cart to make purchase</p>
-            {% else %}
-            <button type="submit" class="btn btn-primary btn-lg" method="POST"
-                action="{% url 'cart' %}">Purchase</button>
+            <h4 id="total"></h4>
+
+            <button type="submit" class="btn btn-primary btn-lg">Purchase</button>
             {% endif %}
         </form>
     </div>
 </div>
+
+<script>
+    var price = 0;
+    for (var i = 0; i < document.form.optradio.length; i++) {
+        document.form.optradio[i].addEventListener('click', function() {
+            var total = parseFloat(this.value) + parseFloat('{{ total }}')
+            document.getElementById('total').innerHTML = 'Total: $' + total
+        })
+        if (document.form.optradio[i].checked) {
+            price = parseFloat(document.form.optradio[i].value)
+        }
+    }
+    var total = parseFloat(price) + parseFloat('{{ total }}')
+    document.getElementById('total').innerHTML = 'Total: $' + total
+</script>
+
 {% endblock %}

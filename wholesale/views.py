@@ -64,6 +64,17 @@ def default_category():
 default_category()
 
 @csrf_exempt
+def default_shipping():
+    if not ShippingMethod.objects.filter(ShipMethName = 'Two day'):
+        one = ShippingMethod(ShipMethName = 'Two day', ShipMethDesc = "two day shipping", ShipMethPrice = 10.0)
+        one.save()
+        two = ShippingMethod(ShipMethName = 'Four day', ShipMethDesc = "Four day shipping", ShipMethPrice = 6.0)
+        two.save()
+        three = ShippingMethod(ShipMethName = 'Seven day', ShipMethDesc = "Seven day shipping", ShipMethPrice = 4.0)
+        three.save()
+default_shipping()
+
+@csrf_exempt
 def products(request, category_id):
     if (request.method == "GET"):
         products = Products.objects.all().filter(category = category_id)
@@ -220,12 +231,21 @@ def cart(request):
             obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
             cartList.append(obj)
             total += productPrice * prod.prodQuantity
+
         if request.method == 'GET':
             return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total})
-        # elif request.method == 'POST':
-        #     shippingMethod = ShippingMethod.objects.filter(id = 1)
-        #     order = Order.objects.create(customer = customer, orderDate = datetime.date.today(), shippedDate = datetime.date.today(),
-        #                                  totalPrice = totalPrice, payment = paymentid, shippingAddress = address, shippingMethod = )
+        elif request.method == 'POST':
+            shippingPrice = request.POST['optradio']
+            shippingMethod = ShippingMethod.objects.get(ShipMethPrice = shippingPrice)
+            totalPrice = float(total) + float(shippingPrice)
+            payment = Payment.objects.get(id=list(paymentid)[0])
+            order = Order.objects.create(customer = customer, orderDate = datetime.date.today(), shippedDate = datetime.date.today(),
+                                         totalPrice = totalPrice, payment = payment, shippingAddress = ShippingAddress.objects.get(custID=customer), shippingMethod = shippingMethod)
+            order.save()
+            Cart.objects.filter(customer=customer).delete()
+            messages.success(request,('Your order has been processed!'))
+            cartList = []
+            return render(request, 'cart.html', {'ship': address, 'number': number, 'name': name, 'product': cartList})
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
@@ -355,7 +375,7 @@ def shipping(request):
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
-
+@csrf_exempt
 def payment(request):
     if request.user.is_authenticated:
         if request.method == 'GET':
@@ -392,6 +412,15 @@ def payment(request):
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
+@csrf_exempt
+def order(request):
+    if request.user.is_authenticated:
+        u = User.objects.get(id = request.user.id)
+        customer = u.customers
+        order = Order.objects.filter(customer=customer)
+        return render(request, "account/order.html", {'order': order})
+    else:
+        return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
 """ Sign user in on post, update password on patch, or get sign in 
     form on get """
@@ -434,6 +463,9 @@ def register(request):
         if form.is_valid():
             if form.cleaned_data['password'] != form.cleaned_data['passwordconf']:
                 messages.error(request,('Password confirmation does not match password'))
+                return render(request, "register.html", {'form': RegistrationForm})
+            elif User.objects.filter(username=form.cleaned_data['username']).exists():
+                messages.error(request,('Username has been taken'))
                 return render(request, "register.html", {'form': RegistrationForm})
             else:
                 User.objects.create_user(username = form.cleaned_data['username'], email = form.cleaned_data['email'], password = form.cleaned_data['password'])
