@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 from django.contrib.auth.models import User
-from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order
+from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
@@ -104,7 +104,40 @@ def product_detail(request, product_id, category_id):
         except:
             return HttpResponse("Category does not exists.", status=404)
         print(Cart.objects.all())
-        print(request.POST['quantity'])
+        print(type(request.POST['quantity']))
+        # cart_item = Cart.objects.all().filter(customer_id = )
+        print(request.user.id)
+        u = User.objects.get(id = request.user.id)
+        customer = u.customers
+        print("test1")
+        product = Products.objects.all().filter(id = product_id)[0]
+        print(Cart.objects.all().filter(customer=customer, prodName=product))
+        print("test2")
+        if (len(Cart.objects.all().filter(customer=customer, prodName=product)) != 0):
+            try:
+                print("test")
+                cart_info = Cart.objects.filter(customer=customer, prodName=product).values()[0]
+                cart_info_values = Cart.objects.get(customer=customer, prodName=product)
+                print(cart_info)
+            except:
+                messages.error(request,('item does not exist'))
+                HttpResponseRedirect('product detail')
+            try:
+                # update the data
+                print("test13")
+                print(type(cart_info['prodQuantity']))
+                print("test15")
+                cart_info_values.prodQuantity = cart_info['prodQuantity'] + int(request.POST['quantity'])
+                print(cart_info['prodQuantity'] + int(request.POST['quantity']))
+                print("test16")
+                cart_info_values.save()
+            except:
+                messages.error(request,('could not update the quantity'))
+                HttpResponseRedirect('product detail')
+        else:
+            new_item = Cart(customer=customer, prodName=product, prodQuantity=request.POST['quantity'])
+            new_item.save()
+        print(Cart.objects.all().values())
         return HttpResponse(render(request, "productDetail.html", 
 			{'product':product, 'category':category}), status=200)
     else:
@@ -167,25 +200,34 @@ def product_regi(request):
 
 @csrf_exempt
 def cart(request):
-    u = User.objects.get(id = request.user.id)
-    customer = u.customers
-    address = ShippingAddress.objects.filter(custID=customer)
-    paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(user = request.user)
-    if paymentid[0] is not None:
-        number = Payment.objects.values_list('CardNumber', flat = True).get(id=list(paymentid)[0])
-        name = Payment.objects.values_list('Name', flat = True).get(id=list(paymentid)[0])
+    if request.user.is_authenticated:
+        u = User.objects.get(id = request.user.id)
+        user = User.objects.get(username=u)
+        customer = user.customers
+        address = ShippingAddress.objects.filter(custID=customer)
+        paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(user = request.user)
+        if paymentid[0] is not None:
+            number = Payment.objects.values_list('CardNumber', flat = True).get(id=list(paymentid)[0])
+            name = Payment.objects.values_list('Name', flat = True).get(id=list(paymentid)[0])
+        else:
+            number = 'Please set a credit card number'
+            name = 'Please set a credit card name'
+        products = Cart.objects.filter(customer=customer)
+        cartList = []
+        total = 0
+        for prod in products:
+            productPrice = Products.objects.values_list('price', flat = True).get(name = prod.prodName.name)
+            obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
+            cartList.append(obj)
+            total += productPrice * prod.prodQuantity
+        if request.method == 'GET':
+            return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total})
+        # elif request.method == 'POST':
+        #     shippingMethod = ShippingMethod.objects.filter(id = 1)
+        #     order = Order.objects.create(customer = customer, orderDate = datetime.date.today(), shippedDate = datetime.date.today(),
+        #                                  totalPrice = totalPrice, payment = paymentid, shippingAddress = address, shippingMethod = )
     else:
-        number = 'Please set a credit card number'
-        name = 'Please set a credit card name'
-    products = Cart.objects.filter(customer=customer)
-    priceList = []
-    for prod in products:
-        productPrice = Products.objects.get(name = prod.prodName)
-        priceList.add(productPrice)
-    if request.method == 'GET':
-        return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': products, 'price': priceList})
-    # elif request.method == 'POST':
-    #     return render(request, "cart.html", {'ship': address, 'number': number, 'name': name})
+        return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
 @csrf_exempt
 def about(request):
@@ -313,33 +355,6 @@ def shipping(request):
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
-
-    
-
-""" Update and create new account information """
-""" Stanley worked on this function, app does not work without this function"""
-@csrf_exempt
-def account(request):
-    if request.method == 'GET':
-        u = User.objects.get(id = request.user.id)
-        user = User.objects.get(username=u)
-        customer = user.customers
-        return render(request, 'account/account.html', {'customer': customer})
-    """ Update and create new account information """
-    # elif request.method == 'PATCH':
-    #     if request.user.is_authenticated:
-    #         """ Update password for user """
-    #         try:
-    #             data = json.loads(request.body.decode('utf-8'))
-    #         except:
-    #             return HttpResponse('Json encode error', status = status.HTTP_400_BAD_REQUEST)
-    #         u = User.objects.get(id = request.user.id)
-    #         u.password = data['password']
-    #         u.save()
-    #         messages.success(request,('Password updated'))
-    #         return redirect('account')
-    #     else:
-    #         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
 def payment(request):
     if request.user.is_authenticated:

@@ -64,7 +64,6 @@ class Customers(models.Model):
 class Cart(models.Model):
     customer = models.ForeignKey(Customers, on_delete=models.CASCADE)
     prodName = models.ForeignKey(Products, on_delete=models.CASCADE)
-    # prodPrice = models.FloatField(default=0.00)
     prodQuantity = models.IntegerField()
 
 class ShippingAddress(models.Model):
@@ -87,15 +86,6 @@ class Order(models.Model):
     payment = models.ForeignKey(Payment, on_delete=models.CASCADE)
     shippingMethod = models.ForeignKey(ShippingMethod, on_delete=models.CASCADE)
     shippingAddress = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE)
-    product = models.ManyToManyField(Products, through='Prod_order')
-
-    
-    
-class Prod_order(models.Model):
-    product = models.ForeignKey(Products, on_delete=models.CASCADE)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=0)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
 
 
 class BusinessApplication(models.Model):
