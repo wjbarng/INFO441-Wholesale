@@ -31,4 +31,5 @@ urlpatterns = [
     path('payment/', views.payment, name='payment'),
     path('shipping/', views.shipping, name='shipping'),
     path('application/', views.application, name='application'),
+    path('order/', views.order, name='order')
 ]
