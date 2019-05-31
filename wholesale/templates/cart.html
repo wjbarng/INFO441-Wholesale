@@ -16,7 +16,7 @@
 {% else %}
 {% for prod in product %}
 <div class="d-flex flex-row justify-content-between">
-    <p> {{ prod.name }} </br> <button type="button" class="btn btn-link">Remove</button></p>
+    <p> {{ prod.name }} </br> <button onclick="removeFunction( {{ prod.name }} )" id={{ prod.name }} type="button" class="btn btn-link remove">Remove</button></p>
     <p>${{ prod.price }}</p>
     <p>{{ prod.quantity }}</p>
     <p>${{ prod.price|mul:prod.quantity }}</p>
@@ -90,6 +90,27 @@
     }
     var total = parseFloat(price) + parseFloat('{{ total }}')
     document.getElementById('total').innerHTML = 'Total: $' + total
-</script>
 
+    var csrftoken = '{{ csrf_token }}';
+    function removeFunction( prodName ) {
+        console.log("hihihi")
+        console.log(prodName)
+        console.log(prodName.id)
+        var myData = {'product': prodName.id}
+        return fetch('/cart', {
+            method: "DELETE",
+            credentials: "same-origin",
+            headers: {
+                "X-CSRFToken": csrftoken,
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(myData)
+            })
+            .then((response) => {console.log("return page")
+            window.location.reload(true)
+            }); // parses JSON response into native Javascript objects 
+
+            }
+</script>
 {% endblock %}

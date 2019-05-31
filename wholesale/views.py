@@ -207,10 +207,17 @@ def product_regi(request):
             User.objects.filter(id = request.user.id).delete()
             Customers.objects.filter(user = request.user).delete()
     elif request.method == "GET":
+        if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
+            messages.error(request,('You are not authorized'))
+            return redirect(signin)
         return render(request, "registerProduct.html", {'form': ProductRegistrationForm})
-
+    else:
+        return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 @csrf_exempt
 def cart(request):
+    print("cart")
+    print(request.method)
     if request.user.is_authenticated:
         u = User.objects.get(id = request.user.id)
         user = User.objects.get(username=u)
@@ -233,6 +240,8 @@ def cart(request):
             total += productPrice * prod.prodQuantity
 
         if request.method == 'GET':
+            print(cartList)
+            print("second page")
             return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total})
         elif request.method == 'POST':
             shippingPrice = request.POST['optradio']
@@ -246,6 +255,33 @@ def cart(request):
             messages.success(request,('Your order has been processed!'))
             cartList = []
             return render(request, 'cart.html', {'ship': address, 'number': number, 'name': name, 'product': cartList})
+        elif request.method == 'DELETE':
+            print(json.loads(request.body.decode('utf-8'))['product'])
+            product_name = json.loads(request.body.decode('utf-8'))['product']
+            u = User.objects.get(id = request.user.id)
+            customer = u.customers
+            print("test1")
+            product = Products.objects.all().filter(name = product_name)[0]
+            print(Cart.objects.all().values().filter(customer=customer, prodName=product))
+            print("test2")
+            print(Cart.objects.filter(customer=customer, prodName=product))
+            Cart.objects.filter(customer=customer, prodName=product).delete()
+            print("test6")
+            cartList = []
+            total = 0
+            products = Cart.objects.filter(customer=customer)
+            print("test3")
+            for prod in products:
+                print(prod)
+                print(prod.prodName)
+                productPrice = Products.objects.values_list('price', flat = True).get(name = prod.prodName.name)
+                obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
+                cartList.append(obj)
+                total += productPrice * prod.prodQuantity
+            print("test4")
+            print(cartList)
+            request.method = "GET"
+            return cartList
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
