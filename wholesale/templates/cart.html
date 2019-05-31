@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %} Cart {% endblock %}
-
+{% load mathfilters %}
 {% block content %}
 <h1>Shopping Cart</h1></br>
 <div class="d-flex flex-row justify-content-between">
@@ -11,21 +11,26 @@
 </div>
 <hr>
 
-
+{% if product|length == 0 %}
+<h3>Your cart is empty</h3>
+{% else %}
+{% for prod in product %}
 <div class="d-flex flex-row justify-content-between">
-    <p>Peanut Butter </br> <button type="button" class="btn btn-link">Remove</button></p>
-    <p>$5</p>
-    <p>2</p>
-    <p>$10</p>
+    <p> {{ prod.name }} </br> <button onclick="removeFunction( {{ prod.name }} )" id={{ prod.name }} type="button" class="btn btn-link remove">Remove</button></p>
+    <p>${{ prod.price }}</p>
+    <p>{{ prod.quantity }}</p>
+    <p>${{ prod.price|mul:prod.quantity }}</p>
 </div>
 <hr>
+{% endfor %}
+{% endif %}
 
 <div class="d-flex flex-row justify-content-between">
     <div class="border">
         <h3>Payment</h3>
         <p>Card Number: {{ number }}</p>
         <p>Cardholder Name: {{ name }}</p>
-        <a href="{% url 'payment' %}" class="btn btn-link" role="button" >Change Payment Method</a>
+        <a href="{% url 'payment' %}" class="btn btn-link" role="button">Change Payment Method</a>
     </div>
     <div class="border">
         <h3>Shipping</h3>
@@ -41,29 +46,58 @@
         <p>Phone number: {{ value.shipAddPhone }}</p>
 
         {% endfor %}
-        <a href="{% url 'shipping' %}" class="btn btn-link" role="button" >Change Shipping Address</a>
+        <a href="{% url 'shipping' %}" class="btn btn-link" role="button">Change Shipping Address</a>
         {% else %}
         <p>No address saved</p>
-        <a href="{% url 'shipping' %}" class="btn btn-link" role="button" >Change Shipping Address</a>
+        <a href="{% url 'shipping' %}" class="btn btn-link" role="button">Change Shipping Address</a>
         {% endif %}
     </div>
     <div>
-        <p>Subtotal:</p>
-        <div class="radio">
-            <label><input type="radio" name="optradio" checked>Shipping Option 1</label>
-        </div>
-        <div class="radio">
-            <label><input type="radio" name="optradio">Shipping Option 2</label>
-        </div>
-        <div class="radio">
-            <label><input type="radio" name="optradio">Shipping Option 3</label>
-        </div>
-        <h4>Total:</h4>
-        {% if ship|length == 0 or number == 'Please set a credit card number'%}
-        <p>Shipping and payment information must be complete to make purchase</p>
-        {% else %}
-        <button type="submit" class="btn btn-primary btn-lg">Purchase</button>
-        {% endif %}
+        <p>Subtotal: ${{ total }}</p>
+        <form action=" {% url 'cart' %}" method="POST">
+            <div class="radio">
+                <label><input type="radio" name="optradio" value='10' checked>2 day delivery: $10</label>
+            </div>
+            <div class="radio">
+                <label><input type="radio" name="optradio" value='6'>4 day delivery: $6</label>
+            </div>
+            <div class="radio">
+                <label><input type="radio" name="optradio" value='4'>7 day delivery: $4</label>
+            </div>
+            <h4>Total:</h4>
+            {% if ship|length == 0 or number == 'Please set a credit card number'%}
+            <p>Shipping and payment information must be complete to make purchase</p>
+            {% elif product|length == 0 %}
+            <p>Add products to cart to make purchase</p>
+            {% else %}
+            <button type="submit" class="btn btn-primary btn-lg" method="POST"
+                action="{% url 'cart' %}">Purchase</button>
+            {% endif %}
+        </form>
     </div>
 </div>
+
+<script>
+    var csrftoken = '{{ csrf_token }}';
+    function removeFunction( prodName ) {
+        console.log("hihihi")
+        console.log(prodName)
+        console.log(prodName.id)
+        var myData = {'product': prodName.id}
+        return fetch('/cart', {
+            method: "DELETE",
+            credentials: "same-origin",
+            headers: {
+                "X-CSRFToken": csrftoken,
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(myData)
+            })
+            .then((response) => {console.log("return page")
+            window.location.reload(true)
+            }); // parses JSON response into native Javascript objects 
+
+            }
+</script>
 {% endblock %}

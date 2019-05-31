@@ -70,12 +70,3 @@
 {% endblock %}
 
 
-custID = models.ForeignKey(Customers, on_delete=models.CASCADE)
-shipAddFname = models.CharField(null=True, max_length=50)
-shipAddLname = models.CharField(null=True, max_length=50)
-businessName = models.CharField(null=True, max_length=50)
-shipAddAddress = models.CharField(max_length = 80)
-shipAddCity = models.CharField(max_length = 50)
-shipAddState = models.CharField(max_length = 2)
-shipAddZip = models.CharField(max_length = 20)
-shipAddPhone = models.CharField(max_length = 20)

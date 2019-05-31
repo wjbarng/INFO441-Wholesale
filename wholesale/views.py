@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 from django.contrib.auth.models import User
-from wholesale.models import Customers, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order, Prod_order, Cart
+from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
@@ -59,6 +59,8 @@ def default_category():
         if (category not in exist_category):
             new_category = Category(name=category, image=image)
             new_category.save()
+    print(Category.objects.all().values())
+    print(Cart.objects.all())
 default_category()
 
 @csrf_exempt
@@ -203,9 +205,12 @@ def product_regi(request):
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 @csrf_exempt
 def cart(request):
-    u = User.objects.get(id = request.user.id)
-    customer = u.customers
-    if request.method == 'GET':
+    print("cart")
+    print(request.method)
+    if request.user.is_authenticated:
+        u = User.objects.get(id = request.user.id)
+        user = User.objects.get(username=u)
+        customer = user.customers
         address = ShippingAddress.objects.filter(custID=customer)
         paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(user = request.user)
         if paymentid[0] is not None:
@@ -214,7 +219,51 @@ def cart(request):
         else:
             number = 'Please set a credit card number'
             name = 'Please set a credit card name'
-        return render(request, "cart.html", {'ship': address, 'number': number, 'name': name})
+        products = Cart.objects.filter(customer=customer)
+        cartList = []
+        total = 0
+        for prod in products:
+            productPrice = Products.objects.values_list('price', flat = True).get(name = prod.prodName.name)
+            obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
+            cartList.append(obj)
+            total += productPrice * prod.prodQuantity
+        if request.method == 'GET':
+            print(cartList)
+            print("second page")
+            return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total})
+        # elif request.method == 'POST':
+        #     shippingMethod = ShippingMethod.objects.filter(id = 1)
+        #     order = Order.objects.create(customer = customer, orderDate = datetime.date.today(), shippedDate = datetime.date.today(),
+        #                                  totalPrice = totalPrice, payment = paymentid, shippingAddress = address, shippingMethod = )
+        elif request.method == 'DELETE':
+            print(json.loads(request.body.decode('utf-8'))['product'])
+            product_name = json.loads(request.body.decode('utf-8'))['product']
+            u = User.objects.get(id = request.user.id)
+            customer = u.customers
+            print("test1")
+            product = Products.objects.all().filter(name = product_name)[0]
+            print(Cart.objects.all().values().filter(customer=customer, prodName=product))
+            print("test2")
+            print(Cart.objects.filter(customer=customer, prodName=product))
+            Cart.objects.filter(customer=customer, prodName=product).delete()
+            print("test6")
+            cartList = []
+            total = 0
+            products = Cart.objects.filter(customer=customer)
+            print("test3")
+            for prod in products:
+                print(prod)
+                print(prod.prodName)
+                productPrice = Products.objects.values_list('price', flat = True).get(name = prod.prodName.name)
+                obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
+                cartList.append(obj)
+                total += productPrice * prod.prodQuantity
+            print("test4")
+            print(cartList)
+            request.method = "GET"
+            return cartList
+    else:
+        return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
 @csrf_exempt
 def about(request):
@@ -342,34 +391,7 @@ def shipping(request):
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
-
-    
-
-""" Update and create new account information """
-""" Stanley worked on this function, app does not work without this function"""
 @csrf_exempt
-def account(request):
-    if request.method == 'GET':
-        u = User.objects.get(id = request.user.id)
-        user = User.objects.get(username=u)
-        customer = user.customers
-        return render(request, 'account/account.html', {'customer': customer})
-    """ Update and create new account information """
-    # elif request.method == 'PATCH':
-    #     if request.user.is_authenticated:
-    #         """ Update password for user """
-    #         try:
-    #             data = json.loads(request.body.decode('utf-8'))
-    #         except:
-    #             return HttpResponse('Json encode error', status = status.HTTP_400_BAD_REQUEST)
-    #         u = User.objects.get(id = request.user.id)
-    #         u.password = data['password']
-    #         u.save()
-    #         messages.success(request,('Password updated'))
-    #         return redirect('account')
-    #     else:
-    #         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
-
 def payment(request):
     if request.user.is_authenticated:
         if request.method == 'GET':
