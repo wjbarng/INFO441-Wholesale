@@ -102,8 +102,15 @@ def product_detail(request, product_id, category_id):
             category = Category.objects.all().filter(id = product['category_id']).values()[0]
         except:
             return HttpResponse("Category does not exists.", status=404)
+        try:
+            print(Products.objects.all().filter(id = product_id)[0])
+            discounts = list(Discount.objects.all().values().filter(product_id=Products.objects.all().filter(id = product_id)[0]))
+            print(discounts)
+        except:
+            return HttpResponse("No discounts found", status=404)
+        
         return HttpResponse(render(request, "productDetail.html", 
-			{'product':product, 'category':category}), status=200)
+			{'product':product, 'category':category, 'discounts':discounts}), status=200)
     elif (request.method == "POST"):
         print("post")
         try:

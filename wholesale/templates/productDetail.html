@@ -15,7 +15,14 @@
                 <li>max_quantity: {{ product.max_quantity }} </li>
                 <li>min_quantity_retail: {{ product.min_quantity_retail }} </li>
             </ul>
-
+            <h4>discounts</h4>
+            {% if discounts|length == 0 %}
+            <p>There is no discount for this product</p>
+            {% else %}
+            {% for discount in discounts %}
+            <p>{{ discount.minQuan }} ~ {{ discount.maxQuan }} : {{ discount.percentage }}%</p>
+            {% endfor %}
+            {% endif %}
             <form method="POST" action="{% url 'product detail' category_id=category.id product_id=product.id %}">
                 <div class="input-group">
                     <span class="input-group-btn">
@@ -45,8 +52,4 @@
 
         
     </div>
-<<<<<<< HEAD
-
-=======
->>>>>>> aecf77c9c6def077ed2f1b2106d952f10efbf942
 {% endblock %}
