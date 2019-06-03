@@ -2,9 +2,9 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 from django.contrib.auth.models import User
-from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order
+from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Order
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout 
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework import viewsets
@@ -164,6 +164,8 @@ def product_regi(request):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        print("testtest")
+        print(request.POST)
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
@@ -172,6 +174,7 @@ def product_regi(request):
                 # connecting foerign key with Category
                 # Category.objects.all().delete()
                 category = Category.objects.all().filter(name = clean_data['category'])[0]
+
                 print(category)
                 # if(not category.exists()):
                 #     print("test1")
@@ -191,9 +194,61 @@ def product_regi(request):
                                 category = category,
                                 max_quantity = clean_data['max_quantity'],
                                 min_quantity_retail = clean_data['min_quantity_retail'])
-            new_product.save()
-            print("success")
             # add discount
+            try:
+                new_product.save()
+            except:
+                messages.error(request,('product form is not valid'))
+                HttpResponseRedirect('registerProduct')
+            dis_product = Products.objects.all().filter(name=clean_data['name'])[0]
+            print(dis_product)
+            # try:
+            if (request.POST['min1'] is not None and
+                request.POST['max1'] is not None and
+                request.POST['min1'] <= request.POST['max1']):
+                print("pass condition")
+                print(type(request.POST['discount1']))
+                tier1_dis = Discount(percentage=float(request.POST['discount1']),
+                                    minQuan=int(request.POST['min1']),
+                                    maxQuan=int(request.POST['max1']),
+                                    product=dis_product)
+                print("save left")
+                tier1_dis.save()
+                print("saved")
+            else:
+                messages.error(request,('Discount section 1 is not valid'))
+                HttpResponseRedirect('registerProduct')
+            print("dis2")
+            if (request.POST['min2'] is not None and
+                request.POST['max2'] is not None and
+                request.POST['max1'] < request.POST['min2'] and
+                request.POST['min2'] <= request.POST['max2']):                                      
+                tier2_dis = Discount(percentage = float(request.POST['discount2']),
+                                    minQuan= int(request.POST['min2']),
+                                    maxQuan= int(request.POST['max2']),
+                                    product= dis_product)
+                tier2_dis.save()
+            else:
+                messages.error(request,('Discount section 2 is not valid'))
+                HttpResponseRedirect('registerProduct')
+            print("dis3")
+            if (request.POST['min3'] is not None and
+                request.POST['max3'] is not None and
+                request.POST['max2'] < request.POST['min3'] and
+                request.POST['min3'] <= request.POST['max3']):                
+                tier3_dis = Discount(percentage = float(request.POST['discount3']),
+                                    minQuan= int(request.POST['min3']),
+                                    maxQuan= int(request.POST['max3']),
+                                    product= dis_product)
+                tier3_dis.save()
+            else:
+                messages.error(request,('Discount section 3 is not valid'))
+                HttpResponseRedirect('registerProduct')
+            # except:
+            #     messages.error(request,('Discount section is not valid'))
+            #     HttpResponseRedirect('registerProduct')
+            print("success")
+
             messages.success(request,('You have successfully registered'))
             return render(request, "products.html")
             # except:
@@ -639,10 +694,16 @@ def Discount_view(request):
             if (data['minQuan'] > data['maxQuan']):
                 HttpResponse("minQuan cannot be larger than maxQuan", 
                             safe=False, status = status.HTTP_404_NOT_FOUND)
+            try:
+                product = Products.obejcts.all().filter(id=data['id'])[0]
+            except:
+                HttpResponse("Product not found", 
+                            safe=False, status = status.HTTP_404_NOT_FOUND)
+
             new_discount = Discount(percentage = data['percentage'],
                                     minQuan = data['minQuan'],
                                     maxQuan = data['maxQuan'],
-                                    disShipping = data['disShipping'])
+                                    product = product)
         except:
             return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
         try:

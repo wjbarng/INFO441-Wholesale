@@ -3,11 +3,6 @@ import datetime
 import sys
 from django.contrib.auth.models import User
 
-class Discount(models.Model):
-    percentage = models.FloatField(default=0.00)
-    minQuan = models.IntegerField(default=0)
-    maxQuan = models.IntegerField(default=sys.maxsize)
-
 class Payment(models.Model):
     CardNumber = models.IntegerField()
     Name = models.CharField(max_length=50)
@@ -42,11 +37,16 @@ class Products(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     max_quantity = models.IntegerField(default=sys.maxsize)
     min_quantity_retail = models.IntegerField(default=0)
-    discount = models.ManyToManyField(Discount, null=True, through='Prod_dis')
 
-class Prod_dis(models.Model):
-    products = models.ForeignKey(Products, on_delete=models.CASCADE)
-    discount = models.ForeignKey(Discount, on_delete=models.CASCADE)
+class Discount(models.Model):
+    percentage = models.FloatField(default=0.00)
+    minQuan = models.IntegerField(default=0)
+    maxQuan = models.IntegerField(default=sys.maxsize)
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+
+# class Prod_dis(models.Model):
+#     products = models.ForeignKey(Products, on_delete=models.CASCADE)
+#     discount = models.ForeignKey(Discount, on_delete=models.CASCADE)
 
 class Customers(models.Model):
     user = models.OneToOneField(User, default = 1, on_delete=models.CASCADE)

@@ -51,7 +51,6 @@ class ProductRegistrationForm(forms.Form):
     category = forms.ChoiceField(required=True, choices=CATEGORY_CHOICES)
     max_quantity = forms.IntegerField(required=True)
     min_quantity_retail = forms.IntegerField(required=True)
-    discount = forms.FloatField(required=False)
     
 class BusinessApplicationForm(forms.Form):
     busName = forms.CharField(label='Business Name', max_length=30, required=True)
