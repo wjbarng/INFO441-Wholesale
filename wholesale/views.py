@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationForm, BusinessApplicationForm
 from django.contrib.auth.models import User
-from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Prod_dis, Order
+from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Order
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
@@ -26,6 +26,26 @@ import requests
 DatabaseErrorMessage = "Error interacting with database."
 """ web page to scrape from """
 page = 'https://www.directliquidation.com/liquidation-102/top-5-benefits-buying-wholesale-merchandise-discounted-retailer-business/'
+walmart = 'https://www.walmart.com/tp/peanut-butter'
+
+@csrf_exempt
+def web_scraping():
+    page_response = requests.get(walmart, timeout=100)
+    page_content = BeautifulSoup(page_response.content, "html.parser")
+    productName = page_content.find_all("h2")[0].get_text()
+    productUrl = page_content.findAll(class_="Tile-img")
+    productPrice = page_content.findAll("span", class_='Price-group')
+    category = Category.objects.get(name='Pantry & Dry Goods')
+    if not Products.objects.filter(name=productName):
+        new_product = Products(name = productName,
+                        description = "Creamy Peanut Butter",
+                        image = productUrl[0]['src'],
+                        price = float(productPrice[0]['title'][1:]),
+                        category = category,
+                        max_quantity = 100,
+                        min_quantity_retail = 10)
+        new_product.save()
+web_scraping()
 
 @csrf_exempt
 def homepage(request):
@@ -36,7 +56,7 @@ def homepage(request):
                                           'title3': page_content.find_all("h2")[2].get_text(), 'content3': page_content.find_all("p")[7].get_text(),
                                           'title4': page_content.find_all("h2")[3].get_text(), 'content4': page_content.find_all("p")[11].get_text(),
                                           'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text() })
-
+    return render(request, 'index.html', {})
 
 @csrf_exempt
 def default_category():
