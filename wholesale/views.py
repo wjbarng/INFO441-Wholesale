@@ -25,17 +25,21 @@ import requests
 
 DatabaseErrorMessage = "Error interacting with database."
 """ web page to scrape from """
-page = 'https://www.directliquidation.com/liquidation-102/top-5-benefits-buying-wholesale-merchandise-discounted-retailer-business/'
+page = 'https://tweakyourbiz.com/marketing/6-awesome-benefits-of-wholesale-marketing'
+page = 'https://www.selfgrowth.com/articles/top-5-advantages-of-buying-wholesale-products-from-online-stores'
 
 @csrf_exempt
 def homepage(request):
     page_response = requests.get(page, timeout=5)
     page_content = BeautifulSoup(page_response.content, "html.parser")
-    return render(request, "index.html", {'title1': page_content.find_all("h2")[0].get_text(), 'content1': page_content.find_all("p")[1].get_text(), 
-                                          'title2': page_content.find_all("h2")[1].get_text(), 'content2': page_content.find_all("p")[5].get_text(),
-                                          'title3': page_content.find_all("h2")[2].get_text(), 'content3': page_content.find_all("p")[7].get_text(),
-                                          'title4': page_content.find_all("h2")[3].get_text(), 'content4': page_content.find_all("p")[11].get_text(),
-                                          'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text() })
+    page_content = page_content.find('div', class_="article-page")
+    page_article_body = page_content.find('div', class_="article-body")
+    return render(request, "index.html", {'title':page_content.find("h1").get_text(),
+                                          'title1': page_article_body.find_all('p')[2].get_text(), 'content1': page_article_body.find_all('p')[3].get_text(), 
+                                          'title2': page_article_body.find_all('p')[4].get_text(), 'content2': page_article_body.find_all('p')[5].get_text(),
+                                          'title3': page_article_body.find_all('p')[6].get_text(), 'content3': page_article_body.find_all('p')[7].get_text(),
+                                          'title4': page_article_body.find_all('p')[8].get_text(), 'content4': page_article_body.find_all('p')[9].get_text(),
+                                          'title5': page_article_body.find_all('p')[10].get_text(), 'content5':page_article_body.find_all('p')[11].get_text() })
 
 
 @csrf_exempt
@@ -53,7 +57,6 @@ def default_category():
         'Snacks':"images/snacks.jpg",
         'Water & Beverages':"images/water.jpg"
     }
-    # Category.objects.all().delete()
     exist_category = [one['name'] for one in list(Category.objects.all().values())]
     for category, image in categories.items():
         if (category not in exist_category):
@@ -147,7 +150,7 @@ def product_detail(request, product_id, category_id):
                         cart_info_values.save()
                         
                     return HttpResponse(render(request, "productDetail.html", 
-                        {'product':product, 'category':category}), status=status.HTTP_200_OK)
+                        {'product':product, 'category':category, 'discounts':discounts}), status=status.HTTP_200_OK)
                 except:
                     messages.error(request,('could not update the quantity'))
                     return HttpResponse(render(request, "productDetail.html", 
@@ -210,9 +213,9 @@ def product_regi(request):
             dis_product = Products.objects.all().filter(name=clean_data['name'])[0]
             try:
                 # check condition of the discount fields
-                if (request.POST['min1'] != "" and
-                    request.POST['max1'] != "" and
-                    request.POST['min1'] <= request.POST['max1']):
+                if (int(request.POST['min1']) != "" and
+                    int(request.POST['max1']) != "" and
+                    int(request.POST['min1']) <= int(request.POST['max1'])):
                     try:
                         tier1_dis = Discount(percentage=float(request.POST['discount1']),
                                             minQuan=int(request.POST['min1']),
@@ -222,10 +225,10 @@ def product_regi(request):
                     except:
                         messages.error(request,('Discount section 1 is not valid'))
                         return HttpResponseRedirect('registerProduct')
-                if (request.POST['min2'] != "" and
-                    request.POST['max2'] != "" and
-                    request.POST['max1'] < request.POST['min2'] and
-                    request.POST['min2'] <= request.POST['max2']):           
+                if (int(request.POST['min2']) != "" and
+                    int(request.POST['max2']) != "" and
+                    int(request.POST['max1']) < int(request.POST['min2']) and
+                    int(request.POST['min2']) <= int(request.POST['max2'])):           
                     try:                           
                         tier2_dis = Discount(percentage = float(request.POST['discount2']),
                                             minQuan= int(request.POST['min2']),
@@ -235,11 +238,11 @@ def product_regi(request):
                     except:
                         messages.error(request,('Discount section 2 is not valid'))
                         return HttpResponseRedirect('registerProduct')
-                if (request.POST['min3'] != "" and
-                    request.POST['max3'] != "" and
-                    request.POST['max2'] < request.POST['min3'] and
-                    request.POST['min3'] <= request.POST['max3']):  
-                    try:              
+                if (int(request.POST['min3']) != "" and
+                    int(request.POST['max3']) != "" and
+                    int(request.POST['max2']) < int(request.POST['min3']) and
+                    int(request.POST['min3']) <= int(request.POST['max3'])):  
+                    try:            
                         tier3_dis = Discount(percentage = float(request.POST['discount3']),
                                             minQuan= int(request.POST['min3']),
                                             maxQuan= int(request.POST['max3']),
@@ -578,8 +581,6 @@ def Category_view(request):
         try:
             # Get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
-            if ('description' not in data.keys()):
-                data['description'] = ""
             if ('image' not in data.keys()):
                 data['image'] = None
             try:
