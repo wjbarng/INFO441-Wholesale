@@ -101,17 +101,35 @@ customer can be linked to a payment method table. A shipping address table and o
 is linked by a foreign key to the customer table. Each order is linked by a foreign key to
 a shipping method table. Order table and products table are in a many to many relationship, so the product order table acts as an associative table. Each product is linked to a category so products table has a foreign key to category. Lastly, each product has one or more discounts and each discount can have one or more products, so these two tables are connected by a product discount table.
 
-1. application/
+1. web_scraping view: scrapes product from Walmart and inserts into database
+2. homepage: Renders homepage with scraped data of reasons to buy wholesale scraped from other site
+3. default_category: Inserts categories into database if they have not been inserted
+4. default_shipping: Inserts shipping methods into database if they have not been inserted
+5. products: On get, renders all products for a given category
+6. categories: On get, renders all categories
+7. product_detail:
+8. product_regi:
+9. cart:
+* Get: Renders the cart page with payment, shipping, items, discount, shipping, and total price shown
+* Post: Takes payment, shipping, customer, item, price, and date information and inserts them into order database to create a new order
+* Delete: Deletes item from cart table and cart page
+10. about: renders about page
+11. support: renders support page
+12. application/
 * Post: If given a valid form, a new application is saved in model BusinessApplication
         , a success message is shown, and user is redirected to the home page. If form
         is not valid, an error message is shown and user remains on application page. Anyone
         can use the route. The field business name, address, zip, city, state, email, and
         phone are saved in the model.
-* Delete: Given a json object with a business name field, the application with the given business name
-          is deleted from the BusinessApplication model. Responds with a HttpResponse of delete successful
-          if application with given name is found. Wil respond with status code 400 if request cannot be encoded
-          into json or status code 404 if application is not found. Responds with 200 status code if application is deleted.
 * Get: Renders the business application form
+13. account: If the user is authenticated, the user's account information is rendered
+14. shipping: If the user is authenticated, the following methods are accessible
+* Get: Renders shipping address information for the user
+* Post: Updates the shipping address for the user, if the user is an individual the first and last name are saved, if the user is a retailer, the business name is saved
+15. payment: If the user is authenticated, the following methods are accessible
+* Get: Shows the payment information for the user
+* Post: Updates cardnumber and card name for user
+16: order: 
 
 2. shipping/
 * Post: Can only be accessed if user is authenticated. If form is not valid, an error message will show and the
