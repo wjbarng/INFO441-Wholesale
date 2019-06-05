@@ -4,19 +4,17 @@ from .forms import RegistrationForm, ShippingAddressForm, ProductRegistrationFor
 from django.contrib.auth.models import User
 from wholesale.models import Customers, Cart, Payment, ShippingAddress, BusinessApplication, Category, Discount, ShippingMethod, Products, Order
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout 
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework import status
-from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.models import User
 from decimal import Decimal
 from django.db import DatabaseError
 import json
 import datetime
+from django.views.decorators.debug import sensitive_post_parameters
 
 """ Web scraping """
 from bs4 import BeautifulSoup
@@ -24,10 +22,11 @@ import requests
 
 
 DatabaseErrorMessage = "Error interacting with database."
-""" web page to scrape from """
+""" web pages to scrape from """
 page = 'https://www.directliquidation.com/liquidation-102/top-5-benefits-buying-wholesale-merchandise-discounted-retailer-business/'
 walmart = 'https://www.walmart.com/tp/peanut-butter'
 
+""" Scrapes information on product and inserted into Products table """
 @csrf_exempt
 def web_scraping():
     page_response = requests.get(walmart, timeout=100)
@@ -55,9 +54,9 @@ def homepage(request):
                                           'title2': page_content.find_all("h2")[1].get_text(), 'content2': page_content.find_all("p")[5].get_text(),
                                           'title3': page_content.find_all("h2")[2].get_text(), 'content3': page_content.find_all("p")[7].get_text(),
                                           'title4': page_content.find_all("h2")[3].get_text(), 'content4': page_content.find_all("p")[11].get_text(),
-                                          'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text() })
-    return render(request, 'index.html', {})
+                                          'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text()}, status=status.HTTP_200_OK)
 
+""" Inserts all categories into Category table if they have not been inserted """
 @csrf_exempt
 def default_category():
     categories = {
@@ -73,16 +72,14 @@ def default_category():
         'Snacks':"images/snacks.jpg",
         'Water & Beverages':"images/water.jpg"
     }
-    # Category.objects.all().delete()
     exist_category = [one['name'] for one in list(Category.objects.all().values())]
     for category, image in categories.items():
         if (category not in exist_category):
             new_category = Category(name=category, image=image)
             new_category.save()
-    print(Category.objects.all().values())
-    print(Cart.objects.all())
 default_category()
 
+""" Inserts all shipping methods into ShippingMethod table if they have not been inserted """
 @csrf_exempt
 def default_shipping():
     if not ShippingMethod.objects.filter(ShipMethName = 'Two day'):
@@ -98,19 +95,20 @@ default_shipping()
 def products(request, category_id):
     if (request.method == "GET"):
         products = Products.objects.all().filter(category = category_id)
-        # return render(request, "products.html", {'products':products})
-        return render(request,'products.html', {'products':products})
+        return render(request,'products.html', {'products':products}, status=status.HTTP_200_OK)
 
 @csrf_exempt
 def categories(request):
      if (request.method == "GET"):
         categories = Category.objects.all()
-        print(categories)
-        return render(request,'category.html', {'categories':categories})
+        return render(request,'category.html', {'categories':categories}, status=status.HTTP_200_OK)
 
 @csrf_exempt
 def product_detail(request, product_id, category_id):
     """ This is a view page for the product detail """
+    u = User.objects.get(id = request.user.id)
+    user = User.objects.get(username=u)
+    customer = user.customers
     print("product_detail")
     print(request.method)
     if (request.method == "GET"):
@@ -122,8 +120,15 @@ def product_detail(request, product_id, category_id):
             category = Category.objects.all().filter(id = product['category_id']).values()[0]
         except:
             return HttpResponse("Category does not exists.", status=404)
+        try:
+            print(Products.objects.all().filter(id = product_id)[0])
+            discounts = list(Discount.objects.all().values().filter(product_id=Products.objects.all().filter(id = product_id)[0]))
+            print(discounts)
+        except:
+            return HttpResponse("No discounts found", status=404)
+        
         return HttpResponse(render(request, "productDetail.html", 
-			{'product':product, 'category':category}), status=200)
+			{'product':product, 'category':category, 'discounts':discounts, 'customer': customer.custLevel}), status=200)
     elif (request.method == "POST"):
         print("post")
         try:
@@ -169,8 +174,14 @@ def product_detail(request, product_id, category_id):
             new_item = Cart(customer=customer, prodName=product, prodQuantity=request.POST['quantity'])
             new_item.save()
         print(Cart.objects.all().values())
+        try:
+            print(Products.objects.all().filter(id = product_id)[0])
+            discounts = list(Discount.objects.all().values().filter(product_id=Products.objects.all().filter(id = product_id)[0]))
+            print(discounts)
+        except:
+            return HttpResponse("No discounts found", status=404)
         return HttpResponse(render(request, "productDetail.html", 
-			{'product':product, 'category':category}), status=200)
+			{'product':product, 'category':category, 'discounts':discounts, 'customer': customer.custLevel}), status=200)
     else:
         return HttpResponse("Method not allowed on /product/id.", status=405)
 
@@ -184,6 +195,8 @@ def product_regi(request):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        print("testtest")
+        print(request.POST)
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
@@ -192,6 +205,7 @@ def product_regi(request):
                 # connecting foerign key with Category
                 # Category.objects.all().delete()
                 category = Category.objects.all().filter(name = clean_data['category'])[0]
+
                 print(category)
                 # if(not category.exists()):
                 #     print("test1")
@@ -211,9 +225,61 @@ def product_regi(request):
                                 category = category,
                                 max_quantity = clean_data['max_quantity'],
                                 min_quantity_retail = clean_data['min_quantity_retail'])
-            new_product.save()
-            print("success")
             # add discount
+            try:
+                new_product.save()
+            except:
+                messages.error(request,('product form is not valid'))
+                HttpResponseRedirect('registerProduct')
+            dis_product = Products.objects.all().filter(name=clean_data['name'])[0]
+            print(dis_product)
+            # try:
+            if (request.POST['min1'] is not None and
+                request.POST['max1'] is not None and
+                request.POST['min1'] <= request.POST['max1']):
+                print("pass condition")
+                print(type(request.POST['discount1']))
+                tier1_dis = Discount(percentage=float(request.POST['discount1']),
+                                    minQuan=int(request.POST['min1']),
+                                    maxQuan=int(request.POST['max1']),
+                                    product=dis_product)
+                print("save left")
+                tier1_dis.save()
+                print("saved")
+            else:
+                messages.error(request,('Discount section 1 is not valid'))
+                HttpResponseRedirect('registerProduct')
+            print("dis2")
+            if (request.POST['min2'] is not None and
+                request.POST['max2'] is not None and
+                request.POST['max1'] < request.POST['min2'] and
+                request.POST['min2'] <= request.POST['max2']):                                      
+                tier2_dis = Discount(percentage = float(request.POST['discount2']),
+                                    minQuan= int(request.POST['min2']),
+                                    maxQuan= int(request.POST['max2']),
+                                    product= dis_product)
+                tier2_dis.save()
+            else:
+                messages.error(request,('Discount section 2 is not valid'))
+                HttpResponseRedirect('registerProduct')
+            print("dis3")
+            if (request.POST['min3'] is not None and
+                request.POST['max3'] is not None and
+                request.POST['max2'] < request.POST['min3'] and
+                request.POST['min3'] <= request.POST['max3']):                
+                tier3_dis = Discount(percentage = float(request.POST['discount3']),
+                                    minQuan= int(request.POST['min3']),
+                                    maxQuan= int(request.POST['max3']),
+                                    product= dis_product)
+                tier3_dis.save()
+            else:
+                messages.error(request,('Discount section 3 is not valid'))
+                HttpResponseRedirect('registerProduct')
+            # except:
+            #     messages.error(request,('Discount section is not valid'))
+            #     HttpResponseRedirect('registerProduct')
+            print("success")
+
             messages.success(request,('You have successfully registered'))
             return render(request, "products.html")
             # except:
@@ -234,10 +300,11 @@ def product_regi(request):
         return render(request, "registerProduct.html", {'form': ProductRegistrationForm})
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
+
+""" Sets up cart with payment, shipping address, product/shipping cost, and discounts. Processes purchases by inserting information into order
+    table and updating 'Your Order' page. Allow user to remove products from cart. """
 @csrf_exempt
 def cart(request):
-    print("cart")
-    print(request.method)
     if request.user.is_authenticated:
         u = User.objects.get(id = request.user.id)
         user = User.objects.get(username=u)
@@ -253,28 +320,37 @@ def cart(request):
         products = Cart.objects.filter(customer=customer)
         cartList = []
         total = 0
+        discount = 0
         for prod in products:
             productPrice = Products.objects.values_list('price', flat = True).get(name = prod.prodName.name)
             obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
             cartList.append(obj)
+
+            if customer.custLevel == 2:
+                productObject = Products.objects.get(name=prod.prodName.name)
+                discountObject = Discount.objects.filter(product=productObject)
+                for deal in discountObject:
+                    if prod.prodQuantity >= deal.minQuan and prod.prodQuantity <= deal.maxQuan:
+                        discount += (productPrice * prod.prodQuantity) * (deal.percentage/100)
             total += productPrice * prod.prodQuantity
 
         if request.method == 'GET':
-            print(cartList)
-            print("second page")
-            return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total})
+            return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total, 'customer': customer.custLevel, 'discount': discount}, status=status.HTTP_200_OK)
         elif request.method == 'POST':
             shippingPrice = request.POST['optradio']
             shippingMethod = ShippingMethod.objects.get(ShipMethPrice = shippingPrice)
             totalPrice = float(total) + float(shippingPrice)
             payment = Payment.objects.get(id=list(paymentid)[0])
-            order = Order.objects.create(customer = customer, orderDate = datetime.date.today(), shippedDate = datetime.date.today(),
-                                         totalPrice = totalPrice, payment = payment, shippingAddress = ShippingAddress.objects.get(custID=customer), shippingMethod = shippingMethod)
-            order.save()
+            try:
+                order = Order.objects.create(customer = customer, orderDate = datetime.date.today(), shippedDate = datetime.date.today(),
+                                            totalPrice = totalPrice, payment = payment, shippingAddress = ShippingAddress.objects.get(custID=customer), shippingMethod = shippingMethod)
+                order.save()
+            except DatabaseError: 
+                return HttpResponse(DatabaseErrorMessage, status = status.HTTP_400_BAD_REQUEST)
             Cart.objects.filter(customer=customer).delete()
             messages.success(request,('Your order has been processed!'))
             cartList = []
-            return render(request, 'cart.html', {'ship': address, 'number': number, 'name': name, 'product': cartList})
+            return render(request, 'cart.html', {'ship': address, 'number': number, 'name': name, 'product': cartList, 'customer': customer.custLevel, 'discount': discount}, status=status.HTTP_200_OK)
         elif request.method == 'DELETE':
             print(json.loads(request.body.decode('utf-8'))['product'])
             product_name = json.loads(request.body.decode('utf-8'))['product']
@@ -307,20 +383,19 @@ def cart(request):
 
 @csrf_exempt
 def about(request):
-    return render(request, "about.html", {})
+    return render(request, "about.html", {}, status=status.HTTP_200_OK)
 
 @csrf_exempt
 def support(request):
-    return render(request, "support.html", {})
+    return render(request, "support.html", {}, status=status.HTTP_200_OK)
 
      
 
-""" Post a new business application or delete an application by business name """
-""" Stanley worked on this function, app did not work when I removed this function"""
+""" Post a new business application for retailers to apply to buy from the site """
 @csrf_exempt
 def application(request):
     if request.method == 'GET':
-        return render(request, 'application.html', {'form': BusinessApplicationForm})
+        return render(request, 'application.html', {'form': BusinessApplicationForm}, status=status.HTTP_200_OK)
     elif request.method == 'POST':
         form = BusinessApplicationForm(request.POST)
         if form.is_valid():
@@ -337,45 +412,22 @@ def application(request):
         else:
             messages.error(request,('Application form not valid'))
             return redirect('application')
-    elif request.method == 'DELETE':
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-        except:
-            return HttpResponse('Json encode error', status = status.HTTP_400_BAD_REQUEST)
-        application = BusinessApplication.objects.filter(busName = data['name'])
-        if application.exists():
-            application.delete()
-            return HttpResponse("Delete successful", status = status.HTTP_200_OK)
-        else:
-            return HttpResponse("Application not found", status = status.HTTP_404_NOT_FOUND)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
+""" If user is signed in, gets their aacount information """
 @csrf_exempt
 def account(request):
-    if request.method == 'GET':
-        u = User.objects.get(id = request.user.id)
-        user = User.objects.get(username=u)
-        customer = user.customers
-        return render(request, 'account/account.html', {'customer': customer})
-    """ Update and create new account information """
-    # elif request.method == 'PATCH':
-    #     if request.user.is_authenticated:
-    #         """ Update password for user """
-    #         try:
-    #             data = json.loads(request.body.decode('utf-8'))
-    #         except:
-    #             return HttpResponse('Json encode error', status = status.HTTP_400_BAD_REQUEST)
-    #         u = User.objects.get(id = request.user.id)
-    #         u.password = data['password']
-    #         u.save()
-    #         messages.success(request,('Password updated'))
-    #         return redirect('account')
-    #     else:
-    #         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
+    if request.user.is_authenticated:
+        if request.method == 'GET':
+            u = User.objects.get(id = request.user.id)
+            user = User.objects.get(username=u)
+            customer = user.customers
+            return render(request, 'account/account.html', {'customer': customer}, status=status.HTTP_200_OK)
+    else:
+        return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
-""" Creates new address for shipping or deletes address associated with user """
-""" Stanley worked on this function, App does not work without this function"""
+""" Creates or edits address for shipping """
 @csrf_exempt
 def shipping(request):
     if request.user.is_authenticated:
@@ -383,7 +435,7 @@ def shipping(request):
         customer = u.customers
         if request.method == 'GET':
             address = ShippingAddress.objects.filter(custID=customer)
-            return render(request, 'account/shipping.html', {"ship": address, "customer": customer})
+            return render(request, 'account/shipping.html', {"ship": address, "customer": customer}, status=status.HTTP_200_OK)
         elif request.method == "POST":
             if customer.custLevel == 1:
                 first = request.POST['firstName']
@@ -407,31 +459,17 @@ def shipping(request):
                                                                       shipAddAddress = address, shipAddCity = city,
                                                                       shipAddState = state, shipAddZip = shipZip, shipAddPhone = number)
                 shippingAddress.save()
-                print(ShippingAddress.objects.all().values())
             except DatabaseError:
-                return HttpReponse(DatabaseErrorMessage, status=400)
+                return HttpReponse(DatabaseErrorMessage, status=HTTP_400_BAD_REQUEST)
             messages.success(request,('Address saved'))
             address = ShippingAddress.objects.filter(custID_id=customer)
-            print(address)
-            return render(request, "account/shipping.html", {"ship": address, "customer": customer})
-        elif request.method == "DELETE":
-            if request.user.is_authenticated:
-                u = User.objects.get(id = request.user.id)
-                customer = u.customers
-                shippingAddress = ShippingAddress.objects.filter(custID = customer)
-                if shippingAddress.exists():
-                    shippingAddress.delete()
-                    return HttpResponse("Delete successful", status = status.HTTP_200_OK)
-                else:
-                    return HttpResponse("Addresses not found", status = status.HTTP_404_NOT_FOUND)
-            else:
-                return HttpResponse(status = status.HTTP_403_FORBIDDEN)
-        else:
-            return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
+            return render(request, "account/shipping.html", {"ship": address, "customer": customer}, status=status.HTTP_200_OK)
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
+""" Creates or edits payment method """
 @csrf_exempt
+@sensitive_post_parameters('cardNumber')
 def payment(request):
     if request.user.is_authenticated:
         if request.method == 'GET':
@@ -442,7 +480,7 @@ def payment(request):
             else:
                 number = 'Please set a credit card number'
                 name = 'Please set a credit card name'
-            return render(request, "account/payment.html", {'number': number, 'name': name})
+            return render(request, "account/payment.html", {'number': number, 'name': name}, status=status.HTTP_200_OK)
         elif request.method == 'POST':
             number = request.POST['cardNumber']
             name = request.POST['name']
@@ -454,7 +492,7 @@ def payment(request):
                 if paymentid.exists():
                     Payment.objects.filter(id = paymentid).delete()
             except DatabaseError:
-                return HttpResponse(DatabaseErrorMessage, status=400)
+                return HttpResponse(DatabaseErrorMessage, status=status.HTTP_400_BAD_REQUEST)
             """ Update customer table with new payment """
             u = User.objects.get(id = request.user.id)
             user = User.objects.get(username=u)
@@ -462,29 +500,26 @@ def payment(request):
             customer.PaymentID = payment
             customer.save()
             messages.success(request,('Card saved'))
-            return render(request, "account/payment.html", {'number': number, 'name': name})
+            return render(request, "account/payment.html", {'number': number, 'name': name}, status=status.HTTP_200_OK)
         else:
             return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
+""" Shows history of orders for a signed in user """
 @csrf_exempt
 def order(request):
     if request.user.is_authenticated:
         u = User.objects.get(id = request.user.id)
         customer = u.customers
         order = Order.objects.filter(customer=customer)
-        return render(request, "account/order.html", {'order': order})
+        return render(request, "account/order.html", {'order': order}, status=status.HTTP_200_OK)
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
 
-""" Sign user in on post, update password on patch, or get sign in 
-    form on get """
-""" Stanley worked on this function"""
+
 @csrf_exempt
 def signin(request):
-    """ Sign user in on post, update password on patch, or get sign in 
-    form on get """
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['userpassword']
@@ -497,7 +532,7 @@ def signin(request):
             messages.success(request,('User does not exist, either register or login again'))
             return redirect('signin')
     elif request.method == "GET":
-        return render(request, "signin.html", {})
+        return render(request, "signin.html", {}, status=status.HTTP_200_OK)
 
 @csrf_exempt
 def signout(request):
@@ -507,9 +542,7 @@ def signout(request):
 
 
 
-""" Registers a new individual user on post, deletes user on delete,
-    and gets the register form on get """
-""" Stanley worked on this function"""
+""" Registers a new individual user """
 @csrf_exempt
 def register(request):
     """ Registers a new individual user on post, deletes user on delete,
@@ -527,22 +560,20 @@ def register(request):
                 User.objects.create_user(username = form.cleaned_data['username'], email = form.cleaned_data['email'], password = form.cleaned_data['password'])
 
                 user = User.objects.filter(username = form.cleaned_data['username']).get()
-                customer = Customers.objects.create(user = user, custFName = form.cleaned_data['first_name'], custLName = form.cleaned_data['last_name'],
-                custAddress = form.cleaned_data['custAddress'], custCity = form.cleaned_data['custCity'], custZip = form.cleaned_data['custZip'],
-                custState = form.cleaned_data['custState'], custPhone = form.cleaned_data['custPhone'], custLevel = form.cleaned_data['custLevel'])
-                customer.save()
+                try:
+                    customer = Customers.objects.create(user = user, custFName = form.cleaned_data['first_name'], custLName = form.cleaned_data['last_name'],
+                    custAddress = form.cleaned_data['custAddress'], custCity = form.cleaned_data['custCity'], custZip = form.cleaned_data['custZip'],
+                    custState = form.cleaned_data['custState'], custPhone = form.cleaned_data['custPhone'], custLevel = form.cleaned_data['custLevel'])
+                    customer.save()
+                except DatabaseError:
+                    return HttpResponse(DatabaseErrorMessage, status=status.HTTP_400_BAD_REQUEST)
                 messages.success(request,('You have successfully registered'))
                 return redirect('signin')
         else:
             messages.error(request,('Form not valid'))
             redirect('register')
-    elif request.method == "DELETE":
-        if request.user.is_authenticated:
-            User.objects.filter(id = request.user.id).delete()
-            Customers.objects.filter(user = request.user).delete()
-            return HttpResponse("Delete successful")
     elif request.method == "GET":
-        return render(request, "register.html", {'form': RegistrationForm})
+        return render(request, "register.html", {'form': RegistrationForm}, status=status.HTTP_200_OK)
 
 @csrf_exempt
 def Category_view(request):
@@ -659,10 +690,16 @@ def Discount_view(request):
             if (data['minQuan'] > data['maxQuan']):
                 HttpResponse("minQuan cannot be larger than maxQuan", 
                             safe=False, status = status.HTTP_404_NOT_FOUND)
+            try:
+                product = Products.obejcts.all().filter(id=data['id'])[0]
+            except:
+                HttpResponse("Product not found", 
+                            safe=False, status = status.HTTP_404_NOT_FOUND)
+
             new_discount = Discount(percentage = data['percentage'],
                                     minQuan = data['minQuan'],
                                     maxQuan = data['maxQuan'],
-                                    disShipping = data['disShipping'])
+                                    product = product)
         except:
             return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
         try:

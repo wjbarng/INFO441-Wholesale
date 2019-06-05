@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    # 'wholesale',
     'wholesale.apps.WholesaleConfig',
     'mathfilters',
 ]
@@ -87,8 +86,7 @@ WSGI_APPLICATION = 'a4.wsgi.application'
 #         'HOST': 'wholesalesql.database.windows.net',
 #         'PORT': '1433',
 #         'OPTIONS': {
-#             'driver': 'ODBC Driver 17 for SQL Server',
-#             'isolation_level': 'READ UNCOMMITTED',  
+#             'driver': 'ODBC Driver 13 for SQL Server',
 #         },
 #     }
 # }

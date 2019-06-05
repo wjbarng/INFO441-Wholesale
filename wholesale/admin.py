@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import Discount, Category, Products, BusinessApplication
-from .models import Customers, Payment, ShippingAddress, ShippingMethod, Order, Cart
+from .models import Discount, Category, Products, BusinessApplication, Customers, Payment, ShippingAddress, ShippingMethod, Order, Cart
 
 
 admin.site.register(Discount)

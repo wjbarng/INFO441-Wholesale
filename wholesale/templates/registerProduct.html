@@ -6,6 +6,49 @@
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    <h4>Discounts</h4>
+      <div class="row">
+        <div class="col">
+          <input name="min1" id="min1" type="text" class="form-control" placeholder="Min">
+        </div>
+        <h3>~</h3>
+        <div class="col">
+          <input name="max1" id="max1" type="text" class="form-control" placeholder="Max">
+        </div>
+        <h3>:</h3>
+        <div class="col">
+          <input name="discount1" id="discount1" type="text" class="form-control" placeholder="Discount">
+        </div>
+        <h3>%</h3>
+      </div>
+      <div class="row">
+          <div class="col">
+            <input name="min2" id="min2" type="text" class="form-control" placeholder="Min">
+          </div>
+          <h3>~</h3>
+          <div class="col">
+            <input name="max2" id="max2" type="text" class="form-control" placeholder="Max">
+          </div>
+          <h3>:</h3>
+          <div class="col">
+            <input name="discount2" id="discount2" type="text" class="form-control" placeholder="Discount">
+          </div>
+          <h3>%</h3>
+        </div>
+        <div class="row">
+            <div class="col">
+              <input name="min3" id="min3" type="text" class="form-control" placeholder="Min">
+            </div>
+            <h3>~</h3>
+            <div class="col">
+              <input name="max3" id="max3" type="text" class="form-control" placeholder="Max">
+            </div>
+            <h3>:</h3>
+            <div class="col">
+              <input name="discount3" id="discount3" type="text" class="form-control" placeholder="Discount">
+            </div>
+            <h3>%</h3>
+          </div>
     <button type="submit">Register</button>
   </form>
 {% endblock %}

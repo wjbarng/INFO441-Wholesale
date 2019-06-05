@@ -59,6 +59,9 @@
         <p>Add products to cart to make purchase</p>
         {% else %}
         <p>Subtotal: ${{ total }}</p>
+        {% if customer == 2 %}
+        <p>Discount: -${{ discount }}</p>
+        {% endif %}
         <form name='form' action=" {% url 'cart' %}" method="POST">
             <div class="radio">
                 <label><input type="radio" name="optradio" id="two" value='10' checked>2 day delivery: $10</label>
@@ -78,18 +81,21 @@
 </div>
 
 <script>
-    var price = 0;
-    for (var i = 0; i < document.form.optradio.length; i++) {
-        document.form.optradio[i].addEventListener('click', function() {
-            var total = parseFloat(this.value) + parseFloat('{{ total }}')
-            document.getElementById('total').innerHTML = 'Total: $' + total
-        })
-        if (document.form.optradio[i].checked) {
-            price = parseFloat(document.form.optradio[i].value)
+    var form = document.getElementById('two')
+    if (form) {
+        var price = 0;
+        for (var i = 0; i < document.form.optradio.length; i++) {
+            document.form.optradio[i].addEventListener('click', function() {
+                var total = parseFloat(this.value) + parseFloat('{{ total }}') - parseFloat('{{ discount }}') 
+                document.getElementById('total').innerHTML = 'Total: $' + total
+            })
+            if (document.form.optradio[i].checked) {
+                price = parseFloat(document.form.optradio[i].value)
+            }
         }
+        var total = parseFloat(price) + parseFloat('{{ total }}') - parseFloat('{{ discount }}') 
+        document.getElementById('total').innerHTML = 'Total: $' + total
     }
-    var total = parseFloat(price) + parseFloat('{{ total }}')
-    document.getElementById('total').innerHTML = 'Total: $' + total
 
     var csrftoken = '{{ csrf_token }}';
     function removeFunction( prodName ) {

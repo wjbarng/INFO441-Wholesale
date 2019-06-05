@@ -10,12 +10,21 @@
 
             <h2>description: <p>{{ product.description }}</p></h2>
             <ul>
-                <li>price: {{ product.price }}</li>
+                <li>price: ${{ product.price }}</li>
                 <li>category: {{ category.name }} </li>
                 <li>max_quantity: {{ product.max_quantity }} </li>
                 <li>min_quantity_retail: {{ product.min_quantity_retail }} </li>
             </ul>
-
+            {% if customer == 2 %}
+            <h4>discounts</h4>
+            {% if discounts|length == 0 %}
+            <p>There is no discount for this product</p>
+            {% else %}
+            {% for discount in discounts %}
+            <p>{{ discount.minQuan }} ~ {{ discount.maxQuan }} : {{ discount.percentage }}%</p>
+            {% endfor %}
+            {% endif %}
+            {% endif %}
             <form method="POST" action="{% url 'product detail' category_id=category.id product_id=product.id %}">
                 <div class="input-group">
                     <span class="input-group-btn">
@@ -23,7 +32,7 @@
                             <span class="glyphicon glyphicon-minus"></span>
                         </button>
                     </span>
-                    <input type="text" name="quantity" class="form-control input-number" value="1" min="1" max="1000">
+                    <input type="text" name="quantity" class="form-control input-number" value="1" min="30" max="1000">
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-default btn-number" data-type="plus" data-field="quantity">
                             <span class="glyphicon glyphicon-plus"></span>

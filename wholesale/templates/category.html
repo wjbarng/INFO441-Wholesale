@@ -7,9 +7,6 @@
 
     <div class="row">
         {% for category in categories %}
-        <script>
-        console.log(category.id)
-        </script>
         <a class="col-4" href="{% url 'products' category_id=category.id %}">
             <div class="card d-inline-block" style="width: 18rem;">
             <p> {{ category }}</p>
