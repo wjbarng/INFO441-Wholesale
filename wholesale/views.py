@@ -59,8 +59,6 @@ def default_category():
         if (category not in exist_category):
             new_category = Category(name=category, image=image)
             new_category.save()
-    print(Category.objects.all().values())
-    print(Cart.objects.all())
 default_category()
 
 @csrf_exempt
@@ -76,23 +74,21 @@ default_shipping()
 
 @csrf_exempt
 def products(request, category_id):
+    """ This view renders the products.html"""
     if (request.method == "GET"):
         products = Products.objects.all().filter(category = category_id)
-        # return render(request, "products.html", {'products':products})
         return render(request,'products.html', {'products':products})
 
 @csrf_exempt
 def categories(request):
-     if (request.method == "GET"):
+    """ This view renders the category.html """
+    if (request.method == "GET"):
         categories = Category.objects.all()
-        print(categories)
         return render(request,'category.html', {'categories':categories})
 
 @csrf_exempt
 def product_detail(request, product_id, category_id):
     """ This is a view page for the product detail """
-    print("product_detail")
-    print(request.method)
     if (request.method == "GET"):
         try:
             product = Products.objects.all().filter(id = product_id).values()[0]
@@ -103,16 +99,13 @@ def product_detail(request, product_id, category_id):
         except:
             return HttpResponse("Category does not exists.", status=404)
         try:
-            print(Products.objects.all().filter(id = product_id)[0])
-            discounts = list(Discount.objects.all().values().filter(product_id=Products.objects.all().filter(id = product_id)[0]))
-            print(discounts)
+            product_id = Products.objects.all().filter(id = product_id)[0]
+            discounts = list(Discount.objects.all().values().filter(product_id=product_id))
         except:
             return HttpResponse("No discounts found", status=404)
-        
         return HttpResponse(render(request, "productDetail.html", 
 			{'product':product, 'category':category, 'discounts':discounts}), status=200)
     elif (request.method == "POST"):
-        print("post")
         try:
             product = Products.objects.all().filter(id = product_id).values()[0]
         except:
@@ -121,33 +114,19 @@ def product_detail(request, product_id, category_id):
             category = Category.objects.all().filter(id = product['category_id']).values()[0]
         except:
             return HttpResponse("Category does not exists.", status=404)
-        print(Cart.objects.all())
-        print(type(request.POST['quantity']))
-        # cart_item = Cart.objects.all().filter(customer_id = )
-        print(request.user.id)
         u = User.objects.get(id = request.user.id)
         customer = u.customers
-        print("test1")
         product = Products.objects.all().filter(id = product_id)[0]
-        print(Cart.objects.all().filter(customer=customer, prodName=product))
-        print("test2")
         if (len(Cart.objects.all().filter(customer=customer, prodName=product)) != 0):
             try:
-                print("test")
                 cart_info = Cart.objects.filter(customer=customer, prodName=product).values()[0]
                 cart_info_values = Cart.objects.get(customer=customer, prodName=product)
-                print(cart_info)
             except:
                 messages.error(request,('item does not exist'))
                 HttpResponseRedirect('product detail')
             try:
                 # update the data
-                print("test13")
-                print(type(cart_info['prodQuantity']))
-                print("test15")
                 cart_info_values.prodQuantity = cart_info['prodQuantity'] + int(request.POST['quantity'])
-                print(cart_info['prodQuantity'] + int(request.POST['quantity']))
-                print("test16")
                 cart_info_values.save()
             except:
                 messages.error(request,('could not update the quantity'))
@@ -155,7 +134,6 @@ def product_detail(request, product_id, category_id):
         else:
             new_item = Cart(customer=customer, prodName=product, prodQuantity=request.POST['quantity'])
             new_item.save()
-        print(Cart.objects.all().values())
         return HttpResponse(render(request, "productDetail.html", 
 			{'product':product, 'category':category}), status=200)
     else:
@@ -171,29 +149,16 @@ def product_regi(request):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
-        print("testtest")
-        print(request.POST)
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
             # try:
             try:
                 # connecting foerign key with Category
-                # Category.objects.all().delete()
                 category = Category.objects.all().filter(name = clean_data['category'])[0]
-
-                print(category)
-                # if(not category.exists()):
-                #     print("test1")
-                #     Category(name = clean_data['category'], image=None).save()
-                #     print(Category.objects.all().values())
-                #     category = Category.objects.all().filter(name = clean_data['category'])
-                #     print(category)
-                # print("test2")
             except:
                 return HttpResponse('Check category name', 
                     status=status.HTTP_400_BAD_REQUEST)
-            print(category)
             new_product = Products(name = clean_data['name'],
                                 description = clean_data['description'],
                                 image = clean_data['image'],
@@ -201,69 +166,60 @@ def product_regi(request):
                                 category = category,
                                 max_quantity = clean_data['max_quantity'],
                                 min_quantity_retail = clean_data['min_quantity_retail'])
-            # add discount
             try:
                 new_product.save()
             except:
                 messages.error(request,('product form is not valid'))
                 HttpResponseRedirect('registerProduct')
             dis_product = Products.objects.all().filter(name=clean_data['name'])[0]
-            print(dis_product)
-            # try:
-            if (request.POST['min1'] is not None and
-                request.POST['max1'] is not None and
-                request.POST['min1'] <= request.POST['max1']):
-                print("pass condition")
-                print(type(request.POST['discount1']))
-                tier1_dis = Discount(percentage=float(request.POST['discount1']),
-                                    minQuan=int(request.POST['min1']),
-                                    maxQuan=int(request.POST['max1']),
-                                    product=dis_product)
-                print("save left")
-                tier1_dis.save()
-                print("saved")
-            else:
-                messages.error(request,('Discount section 1 is not valid'))
+            try:
+                if (request.POST['min1'] != "" and
+                    request.POST['max1'] != "" and
+                    request.POST['min1'] <= request.POST['max1']):
+                    try:
+                        tier1_dis = Discount(percentage=float(request.POST['discount1']),
+                                            minQuan=int(request.POST['min1']),
+                                            maxQuan=int(request.POST['max1']),
+                                            product=dis_product)
+                        tier1_dis.save()
+                    except:
+                        messages.error(request,('Discount section 1 is not valid'))
+                        return HttpResponseRedirect('registerProduct')
+                if (request.POST['min2'] != "" and
+                    request.POST['max2'] != "" and
+                    request.POST['max1'] < request.POST['min2'] and
+                    request.POST['min2'] <= request.POST['max2']):           
+                    try:                           
+                        tier2_dis = Discount(percentage = float(request.POST['discount2']),
+                                            minQuan= int(request.POST['min2']),
+                                            maxQuan= int(request.POST['max2']),
+                                            product= dis_product)
+                        tier2_dis.save()
+                    except:
+                        messages.error(request,('Discount section 2 is not valid'))
+                        return HttpResponseRedirect('registerProduct')
+                if (request.POST['min3'] != "" and
+                    request.POST['max3'] != "" and
+                    request.POST['max2'] < request.POST['min3'] and
+                    request.POST['min3'] <= request.POST['max3']):  
+                    try:              
+                        tier3_dis = Discount(percentage = float(request.POST['discount3']),
+                                            minQuan= int(request.POST['min3']),
+                                            maxQuan= int(request.POST['max3']),
+                                            product= dis_product)
+                        tier3_dis.save()
+                    except:
+                        messages.error(request,('Discount section 3 is not valid'))
+                        return HttpResponseRedirect('registerProduct')
+            except:
+                messages.error(request,('Discount section is not valid'))
                 HttpResponseRedirect('registerProduct')
-            print("dis2")
-            if (request.POST['min2'] is not None and
-                request.POST['max2'] is not None and
-                request.POST['max1'] < request.POST['min2'] and
-                request.POST['min2'] <= request.POST['max2']):                                      
-                tier2_dis = Discount(percentage = float(request.POST['discount2']),
-                                    minQuan= int(request.POST['min2']),
-                                    maxQuan= int(request.POST['max2']),
-                                    product= dis_product)
-                tier2_dis.save()
-            else:
-                messages.error(request,('Discount section 2 is not valid'))
-                HttpResponseRedirect('registerProduct')
-            print("dis3")
-            if (request.POST['min3'] is not None and
-                request.POST['max3'] is not None and
-                request.POST['max2'] < request.POST['min3'] and
-                request.POST['min3'] <= request.POST['max3']):                
-                tier3_dis = Discount(percentage = float(request.POST['discount3']),
-                                    minQuan= int(request.POST['min3']),
-                                    maxQuan= int(request.POST['max3']),
-                                    product= dis_product)
-                tier3_dis.save()
-            else:
-                messages.error(request,('Discount section 3 is not valid'))
-                HttpResponseRedirect('registerProduct')
-            # except:
-            #     messages.error(request,('Discount section is not valid'))
-            #     HttpResponseRedirect('registerProduct')
-            print("success")
-
             messages.success(request,('You have successfully registered'))
-            return render(request, "products.html")
-            # except:
-            #     messages.error(request,('Could not register product'))
-            #     return render(request, "products.html")
+            categories = Category.objects.all()
+            return render(request,'category.html', {'categories':categories})
         else:
             messages.error(request,('Form not valid'))
-            HttpResponseRedirect('registerProduct')
+            return HttpResponseRedirect('registerProduct')
     elif request.method == "DELETE":
         if request.user.is_authenticated:
             User.objects.filter(id = request.user.id).delete()
@@ -278,8 +234,6 @@ def product_regi(request):
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 @csrf_exempt
 def cart(request):
-    print("cart")
-    print(request.method)
     if request.user.is_authenticated:
         u = User.objects.get(id = request.user.id)
         user = User.objects.get(username=u)
@@ -300,10 +254,7 @@ def cart(request):
             obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
             cartList.append(obj)
             total += productPrice * prod.prodQuantity
-
         if request.method == 'GET':
-            print(cartList)
-            print("second page")
             return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total})
         elif request.method == 'POST':
             shippingPrice = request.POST['optradio']
@@ -318,7 +269,6 @@ def cart(request):
             cartList = []
             return render(request, 'cart.html', {'ship': address, 'number': number, 'name': name, 'product': cartList})
         elif request.method == 'DELETE':
-            print(json.loads(request.body.decode('utf-8'))['product'])
             product_name = json.loads(request.body.decode('utf-8'))['product']
             u = User.objects.get(id = request.user.id)
             customer = u.customers
@@ -651,8 +601,6 @@ def Category_detail_view(request, category_id):
             data = json.loads(request.body.decode('utf-8'))
             if ('name' in data.keys()):
                 category_info_values.name = data['name']
-            # if ('description' in data.keys()):
-            #     category_info_values.description = data['description']
             if ('image' in data.keys()):
                 category_info_values.image = data['image']
         except:
@@ -687,6 +635,9 @@ def Discount_view(request):
     """ This view is an API for the discounts, see readme for more information"""
     if (request.method == "GET"):
         all_discounts = list(Discount.objects.all().values())
+        for discount in range(len(all_discounts)):
+            product = Products.objects.all().values().filter(id = all_discounts[discount]['product_id'])[0]
+            all_discounts[discount]['product_id'] = product
         return JsonResponse(all_discounts, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "POST"):
         try:
@@ -698,15 +649,15 @@ def Discount_view(request):
         try:
             # get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
-            if (data['minQuan'] > data['maxQuan']):
-                HttpResponse("minQuan cannot be larger than maxQuan", 
-                            safe=False, status = status.HTTP_404_NOT_FOUND)
             try:
                 product = Products.obejcts.all().filter(id=data['id'])[0]
+                product_value = product.values()
             except:
                 HttpResponse("Product not found", 
                             safe=False, status = status.HTTP_404_NOT_FOUND)
-
+            if(data['minQuan'] > data['maxQuan']):
+                return HttpResponse("minQuan cannot be larger than maxQuan", 
+                            safe=False, status = status.HTTP_404_NOT_FOUND)
             new_discount = Discount(percentage = data['percentage'],
                                     minQuan = data['minQuan'],
                                     maxQuan = data['maxQuan'],
@@ -722,7 +673,7 @@ def Discount_view(request):
     elif (request.method == "PATCH"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -736,8 +687,6 @@ def Discount_view(request):
                 discount.minQuan = data['minQuan']
             if ('maxQuan' in data.keys()):
                 discount.maxQuan = data['maxQuan']
-            if ('disShipping' in data.keys()):
-                discount.disShipping = data['disShipping']
             if (discount.minQuan > discount.maxQuan):
                 return HttpResponse('minQuan cannot be larger than maxQuan', 
                         status=status.HTTP_400_BAD_REQUEST)
@@ -750,6 +699,24 @@ def Discount_view(request):
                                         content_type='application/json')
         except:
             return HttpResponse('Json Decode Error', status=status.HTTP_400_BAD_REQUEST)
+    elif (request.method == "DELETE"):
+        try:
+            if (not request.user.is_authenticated or 
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
+                return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        except:
+            return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            discount = Discount.objects.get(id = data['id'])
+            # if the key exists it updates the data
+            try:
+                discount.delete()
+                return HttpResponse('Deleted a discount', status=status.HTTP_200_OK)
+            except:
+                return HttpResponse('Deleteing failed', status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return HttpResponse('JSON encoding failed', status=status.HTTP_400_BAD_REQUEST)
     else:
         return HttpResponse('Unavailable Request', status = status.HTTP_400_BAD_REQUEST)
 
@@ -759,7 +726,6 @@ def Product_view(request):
     """ THis view is an API for products, see documentation for more detail"""
     if (request.method == "GET"):
         all_products = list(Products.objects.all().values())
-        print(all_products)
         # change the category id to category
         for product in all_products:
             product['category'] = list(Category.objects.all().values().filter(id = product['category_id']))
@@ -767,12 +733,11 @@ def Product_view(request):
     elif (request.method == "POST"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         try:
-            print("hieel")
             # check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
             if ('description' not in data.keys()):
@@ -785,7 +750,6 @@ def Product_view(request):
             except:
                 return HttpResponse('Check category name', 
                         status=status.HTTP_400_BAD_REQUEST)
-            print("hihi")
             new_product = Products(name = data['name'],
                                     description = data['description'],
                                     image = data['image'],
@@ -793,21 +757,14 @@ def Product_view(request):
                                     category = category,
                                     max_quantity = data['max_quantity'],
                                     min_quantity_retail = data['min_quantity_retail'])
-            new_product.save()
-            print("hi")
-            discount_list = []
-            # connects many-to-many relationship with discounts
-            for discount in data['discount']:
-                new_product.discount.add(Discount.objects.get(id=discount))
-                discount_list.append(Discount.objects.all().values().filter(id=discount)[0])
+            try:
+                new_product.save()
+            except:
+                return HttpResponse('could not save to the database', 
+                        status=status.HTTP_400_BAD_REQUEST)
         except:
             return HttpResponse('json encoding failed', 
                             status=status.HTTP_400_BAD_REQUEST)
-        try:
-            new_product.save()
-        except:
-            return HttpResponse('could not save to the database', 
-                        status=status.HTTP_400_BAD_REQUEST)
         post_product = {
             'name':data['name'],
             'description':data['description'],
@@ -815,14 +772,13 @@ def Product_view(request):
             'price':data['price'],
             'category': Category.objects.all().values().filter(name = data['category'])[0],
             'max_quantity':data['max_quantity'],
-            'min_quantity_retail':data['min_quantity_retail'],
-            'discounts':discount_list
+            'min_quantity_retail':data['min_quantity_retail']
         }
         return JsonResponse(post_product, safe=False, status=status.HTTP_200_OK)
     elif (request.method == "DELETE"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -861,7 +817,7 @@ def Product_detail_view(request, product_id):
     elif (request.method == "PATCH"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -886,19 +842,9 @@ def Product_detail_view(request, product_id):
                 product_detail_info.max_quantity = data['max_quantity']
             if ('min_quantity_retail' in data.keys()):
                 product_detail_info.min_quantity_retail = data['min_quantity_retail']
-            discount_list = []
-            if ('discount' in data.keys()):
-                product_detail_info.discount.clear()
-                try:
-                    for discount in data['discount']:
-                        product_detail_info.discount.add(Discount.objects.get(id=discount))
-                        discount_list.append(Discount.objects.all().values().filter(id=discount)[0])
-                except:
-                    return HttpResponse('Could not find discount', status=status.HTTP_400_BAD_REQUEST)
             product_detail_info.save()
             updated_product = Products.objects.all().values().filter(id=product_id)[0]
             updated_product['category'] = Category.objects.all().values().filter(id = updated_product['category_id'])[0]
-            updated_product['discounts'] = discount_list
             return JsonResponse(updated_product, safe=False, status = status.HTTP_201_CREATED, 
                                         content_type = 'application/json')
         except:

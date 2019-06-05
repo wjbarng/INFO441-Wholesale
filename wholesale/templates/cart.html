@@ -93,9 +93,6 @@
 
     var csrftoken = '{{ csrf_token }}';
     function removeFunction( prodName ) {
-        console.log("hihihi")
-        console.log(prodName)
-        console.log(prodName.id)
         var myData = {'product': prodName.id}
         return fetch('/cart', {
             method: "DELETE",
