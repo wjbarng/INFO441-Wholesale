@@ -40,21 +40,22 @@ a shipping method table. Order table and products table are in a many to many re
 15. payment: If the user is authenticated, the following methods are accessible
 * Get: Shows the payment information for the user
 * Post: Updates cardnumber and card name for user
-16: order: 
+16: order: If user is authenticated, a history of user's orders will be shown
+17. signin: 
+* Get: Returns the signin page
+* Post: Signs the user in
+18. signout: Signs out the user
+19. register: 
+* Post: Creates a new user
+* Get: Return the register page
+20. Category_view
+21. Category_detail_view
+22. Discount_view
+23. Product_view
+24. Product_detail_view
 
-2. shipping/
-* Post: Can only be accessed if user is authenticated. If form is not valid, an error message will show and the
-        user remains on the account page. If the form is valid, the shipping address information is saved in the
-        ShippingAddress model. A success message will show and the account page will populate with the shipping info.
-* Get: Renders the account page
-* Delete: If the user is authenticated, this endpoint will delete all shipping addresses associated with the user.
-          Returns with status code 200 if delete is successful. If no addresses are found, it responds with a 404
-          status code.
+
          
-3. account/
-* Patch: If the user is authenticated, the method will take in a new password through a json object and update the user's current password. If successful, a message will show on the accounts page. 
-* Get: Renders the account page.
-* Post: If the user is authenticated, the method will take in a card number and cardholder name through a json object and create a new payment entry into the Payment model. It then updates the customer table with the new payment. A 400 error will occur if the database cannot be accessed and a 403 error will occur if the user is not authenticated
 
 
 
