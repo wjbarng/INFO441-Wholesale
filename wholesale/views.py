@@ -21,8 +21,8 @@ import requests
 
 DatabaseErrorMessage = "Error interacting with database."
 """ web pages to scrape from """
-page = 'https://www.directliquidation.com/liquidation-102/top-5-benefits-buying-wholesale-merchandise-discounted-retailer-business/'
 walmart = 'https://www.walmart.com/tp/peanut-butter'
+page = 'https://www.selfgrowth.com/articles/top-5-advantages-of-buying-wholesale-products-from-online-stores'
 
 """ Scrapes information on product and inserted into Products table """
 @csrf_exempt
@@ -43,12 +43,20 @@ def web_scraping():
                         min_quantity_retail = 10)
         new_product.save()
 web_scraping()
+    
 
 @csrf_exempt
 def homepage(request):
-    # page_response = requests.get(page, timeout=100)
-    # page_content = BeautifulSoup(page_response.content, "html.parser")
-    return render(request, "index.html", {}, status=status.HTTP_200_OK)
+    home_page_response = requests.get(page, timeout=10)
+    home_page_content = BeautifulSoup(home_page_response.content, "html.parser")
+    page_content = home_page_content.find('div', class_="article-page")
+    page_article_body = page_content.find('div', class_="article-body")
+    return render(request, "index.html", {'title':page_content.find("h1").get_text(),
+                                          'title1': page_article_body.find_all('p')[2].get_text(), 'content1': page_article_body.find_all('p')[3].get_text(), 
+                                          'title2': page_article_body.find_all('p')[4].get_text(), 'content2': page_article_body.find_all('p')[5].get_text(),
+                                          'title3': page_article_body.find_all('p')[6].get_text(), 'content3': page_article_body.find_all('p')[7].get_text(),
+                                          'title4': page_article_body.find_all('p')[8].get_text(), 'content4': page_article_body.find_all('p')[9].get_text(),
+                                          'title5': page_article_body.find_all('p')[10].get_text(), 'content5':page_article_body.find_all('p')[11].get_text() })
 
 """ Inserts all categories into Category table if they have not been inserted """
 @csrf_exempt
