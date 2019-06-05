@@ -27,7 +27,7 @@ walmart = 'https://www.walmart.com/tp/peanut-butter'
 """ Scrapes information on product and inserted into Products table """
 @csrf_exempt
 def web_scraping():
-    page_response = requests.get(walmart, timeout=100)
+    page_response = requests.get(walmart, timeout=10)
     page_content = BeautifulSoup(page_response.content, "html.parser")
     productName = page_content.find_all("h2")[0].get_text()
     productUrl = page_content.findAll(class_="Tile-img")
@@ -46,13 +46,9 @@ web_scraping()
 
 @csrf_exempt
 def homepage(request):
-    page_response = requests.get(page, timeout=5)
-    page_content = BeautifulSoup(page_response.content, "html.parser")
-    return render(request, "index.html", {'title1': page_content.find_all("h2")[0].get_text(), 'content1': page_content.find_all("p")[1].get_text(), 
-                                          'title2': page_content.find_all("h2")[1].get_text(), 'content2': page_content.find_all("p")[5].get_text(),
-                                          'title3': page_content.find_all("h2")[2].get_text(), 'content3': page_content.find_all("p")[7].get_text(),
-                                          'title4': page_content.find_all("h2")[3].get_text(), 'content4': page_content.find_all("p")[11].get_text(),
-                                          'title5': page_content.find_all("h2")[4].get_text(), 'content5': page_content.find_all("p")[12].get_text()}, status=status.HTTP_200_OK)
+    # page_response = requests.get(page, timeout=100)
+    # page_content = BeautifulSoup(page_response.content, "html.parser")
+    return render(request, "index.html", {}, status=status.HTTP_200_OK)
 
 """ Inserts all categories into Category table if they have not been inserted """
 @csrf_exempt
@@ -108,9 +104,9 @@ def product_detail(request, product_id, category_id):
     """ This is a view page for the product detail """
     if request.user.is_authenticated:
         u = User.objects.get(id = request.user.id)
-        customer = u.customers.custLevel
+        customerLevel = u.customers.custLevel
     else:
-        customer = 1
+        customerLevel = 1
 
     if (request.method == "GET"):
         try:
@@ -127,39 +123,75 @@ def product_detail(request, product_id, category_id):
         except:
             return HttpResponse("No discounts found", status=404)
         return HttpResponse(render(request, "productDetail.html", 
-			{'product':product, 'category':category, 'discounts':discounts, 'customer': customer.custLevel}), status=200)
+			{'product':product, 'category':category, 'discounts':discounts, 'customer': customerLevel}), status=status.HTTP_200_OK)
     elif (request.method == "POST"):
-        try:
-            product = Products.objects.all().filter(id = product_id).values()[0]
-        except:
-            return HttpResponse("Product does not exists.", status=404)
-        try:
-            category = Category.objects.all().filter(id = product['category_id']).values()[0]
-        except:
-            return HttpResponse("Category does not exists.", status=404)
-        u = User.objects.get(id = request.user.id)
-        customer = u.customers
-        product = Products.objects.all().filter(id = product_id)[0]
-        if (len(Cart.objects.all().filter(customer=customer, prodName=product)) != 0):
+        # if the user is signed in, add products into the cart
+        if (request.user.is_authenticated):
             try:
-                cart_info = Cart.objects.filter(customer=customer, prodName=product).values()[0]
-                cart_info_values = Cart.objects.get(customer=customer, prodName=product)
+                product = Products.objects.all().filter(id = product_id).values()[0]
             except:
-                messages.error(request,('item does not exist'))
-                HttpResponseRedirect('product detail')
+                return HttpResponse("Product does not exists.", status=404)
             try:
-                # update the data
-                cart_info_values.prodQuantity = cart_info['prodQuantity'] + int(request.POST['quantity'])
-                cart_info_values.save()
+                category = Category.objects.all().filter(id = product['category_id']).values()[0]
             except:
-                messages.error(request,('could not update the quantity'))
-                HttpResponseRedirect('product detail')
+                return HttpResponse("Category does not exists.", status=404)
+            u = User.objects.get(id = request.user.id)
+            customer = u.customers
+            product = Products.objects.all().filter(id = product_id)[0]
+            discounts = list(Discount.objects.all().values().filter(product_id=product_id))
+            #if the product is in the cart
+            if (len(Cart.objects.all().filter(customer=customer, prodName=product)) != 0):
+                try:
+                    cart_info = Cart.objects.filter(customer=customer, prodName=product).values()[0]
+                    cart_info_values = Cart.objects.get(customer=customer, prodName=product)
+                except:
+                    messages.error(request,('item does not exist'))
+                    HttpResponseRedirect('product detail')
+                try:
+                    # update the data
+                    new_Quantity = cart_info['prodQuantity'] + int(request.POST['quantity'])
+                    # Check if new value is over the limit
+                    max_quantity = Products.objects.all().values().filter(id = product_id)[0]['max_quantity']
+                    discount_max_quan = max_quantity
+                    if (len(discounts) != 0):
+                        for dis in discounts:
+                            discount_max_quan = dis['maxQuan']
+                    max_quantity = min(max_quantity, discount_max_quan)
+                    if(new_Quantity > max_quantity):
+                        messages.error(request,('exceeded quantity limit'))
+                        return HttpResponse(render(request, "productDetail.html", 
+                            {'product':product, 'category':category, 'discounts':discounts, 'customer': customerLevel}), status=status.HTTP_200_OK)
+                    else:
+                        cart_info_values.prodQuantity = new_Quantity
+                        cart_info_values.save()
+                        
+                    return HttpResponse(render(request, "productDetail.html", 
+                        {'product':product, 'category':category, 'discounts':discounts, 'customer': customerLevel}), status=status.HTTP_200_OK)
+                except:
+                    messages.error(request,('could not update the quantity'))
+                    return HttpResponse(render(request, "productDetail.html", 
+                        {'product':product, 'category':category, 'discounts':discounts, 'customer': customerLevel}), status=status.HTTP_200_OK)
+            else:
+                max_quantity = Products.objects.all().values().filter(id = product_id)[0]['max_quantity']
+                discount_max_quan = max_quantity
+                if (len(discounts) != 0):
+                    for dis in discounts:
+                        discount_max_quan = dis['maxQuan']
+                max_quantity = min(max_quantity, discount_max_quan)
+                if(int(request.POST['quantity']) > max_quantity):
+                    messages.error(request,('exceeded quantity limit'))
+                    return HttpResponse(render(request, "productDetail.html", 
+                        {'product':product, 'category':category, 'discounts':discounts, 'customer': customerLevel}), status=status.HTTP_200_OK)
+                else:
+                    new_item = Cart(customer=customer, prodName=product, prodQuantity=request.POST['quantity'])
+                    new_item.save()
+                    messages.success(request,('The item is added to your cart'))
+                    return HttpResponse(render(request, "productDetail.html", 
+                        {'product':product, 'category':category, 'discounts':discounts, 'customer': customerLevel}), status=status.HTTP_200_OK)
+                
         else:
-            new_item = Cart(customer=customer, prodName=product, prodQuantity=request.POST['quantity'])
-            new_item.save()
-        discounts = list(Discount.objects.all().values().filter(product_id=product_id))
-        return HttpResponse(render(request, "productDetail.html", 
-			{'product':product, 'category':category, 'discounts':discounts, 'customer': customer.custLevel}), status=200)
+            messages.error(request,('You are not signed in'))
+            return redirect(signin)
     else:
         return HttpResponse("Method not allowed on /product/id.", status=405)
 
@@ -176,9 +208,8 @@ def product_regi(request):
         form = ProductRegistrationForm(request.POST)
         if form.is_valid():
             clean_data = form.clean()
-            # try:
             try:
-                # connecting foerign key with Category
+                # connecting foreign key with Category
                 category = Category.objects.all().filter(name = clean_data['category'])[0]
             except:
                 return HttpResponse('Check category name', 
@@ -197,9 +228,10 @@ def product_regi(request):
                 HttpResponseRedirect('registerProduct')
             dis_product = Products.objects.all().filter(name=clean_data['name'])[0]
             try:
-                if (request.POST['min1'] != "" and
-                    request.POST['max1'] != "" and
-                    request.POST['min1'] <= request.POST['max1']):
+                # check condition of the discount fields
+                if (int(request.POST['min1']) != "" and
+                    int(request.POST['max1']) != "" and
+                    int(request.POST['min1']) <= int(request.POST['max1'])):
                     try:
                         tier1_dis = Discount(percentage=float(request.POST['discount1']),
                                             minQuan=int(request.POST['min1']),
@@ -209,10 +241,10 @@ def product_regi(request):
                     except:
                         messages.error(request,('Discount section 1 is not valid'))
                         return HttpResponseRedirect('registerProduct')
-                if (request.POST['min2'] != "" and
-                    request.POST['max2'] != "" and
-                    request.POST['max1'] < request.POST['min2'] and
-                    request.POST['min2'] <= request.POST['max2']):           
+                if (int(request.POST['min2']) != "" and
+                    int(request.POST['max2']) != "" and
+                    int(request.POST['max1']) < int(request.POST['min2']) and
+                    int(request.POST['min2']) <= int(request.POST['max2'])):           
                     try:                           
                         tier2_dis = Discount(percentage = float(request.POST['discount2']),
                                             minQuan= int(request.POST['min2']),
@@ -222,10 +254,10 @@ def product_regi(request):
                     except:
                         messages.error(request,('Discount section 2 is not valid'))
                         return HttpResponseRedirect('registerProduct')
-                if (request.POST['min3'] != "" and
-                    request.POST['max3'] != "" and
-                    request.POST['max2'] < request.POST['min3'] and
-                    request.POST['min3'] <= request.POST['max3']):  
+                if (int(request.POST['min3']) != "" and
+                    int(request.POST['max3']) != "" and
+                    int(request.POST['max2']) < int(request.POST['min3']) and
+                    int(request.POST['min3']) <= int(request.POST['max3'])):  
                     try:              
                         tier3_dis = Discount(percentage = float(request.POST['discount3']),
                                             minQuan= int(request.POST['min3']),
@@ -311,26 +343,8 @@ def cart(request):
             product_name = json.loads(request.body.decode('utf-8'))['product']
             u = User.objects.get(id = request.user.id)
             customer = u.customers
-            print("test1")
             product = Products.objects.all().filter(name = product_name)[0]
-            print(Cart.objects.all().values().filter(customer=customer, prodName=product))
-            print("test2")
-            print(Cart.objects.filter(customer=customer, prodName=product))
             Cart.objects.filter(customer=customer, prodName=product).delete()
-            print("test6")
-            # cartList = []
-            # total = 0
-            # products = Cart.objects.filter(customer=customer)
-            # print("test3")
-            # for prod in products:
-            #     print(prod)
-            #     print(prod.prodName)
-            #     productPrice = Products.objects.values_list('price', flat = True).get(name = prod.prodName.name)
-            #     obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
-            #     cartList.append(obj)
-            #     total += productPrice * prod.prodQuantity
-            print("test4")
-            print(cartList)
             return None
     else:
         return HttpResponse(status = status.HTTP_403_FORBIDDEN)
@@ -545,8 +559,6 @@ def Category_view(request):
         try:
             # Get the data and check if the data is valid
             data = json.loads(request.body.decode('utf-8'))
-            if ('description' not in data.keys()):
-                data['description'] = ""
             if ('image' not in data.keys()):
                 data['image'] = None
             try:

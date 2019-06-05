@@ -24,6 +24,7 @@
             {% else %}
             {% for discount in discounts %}
             <p>{{ discount.minQuan }} ~ {{ discount.maxQuan }} : {{ discount.percentage }}%</p>
+
             {% endfor %}
             {% endif %}
             {% endif %}
@@ -34,7 +35,7 @@
                             <span class="glyphicon glyphicon-minus"></span>
                         </button>
                     </span>
-                    <input type="text" name="quantity" class="form-control input-number" value="1" min="30" max="1000">
+                    <input type="text" name="quantity" class="form-control input-number" value="1" min=30 max={{ maximum }}>
                     <span class="input-group-btn">
                         <button type="button" class="btn btn-default btn-number" data-type="plus" data-field="quantity">
                             <span class="glyphicon glyphicon-plus"></span>
