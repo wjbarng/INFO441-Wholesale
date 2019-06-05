@@ -3,95 +3,6 @@ This is a repository for INFO441 Wholesale Project
 Database design: https://www.lucidchart.com/invitations/accept/86a6aaec-9d89-46e2-b6ab-ee0a94e94589
 
 
-Endpoints
-
-\` = required
-
-For the "POST", "DELETE", "PATCH" methods, users who are signed as ADMIN have permission.
-For the "GET" method, anyone can call this method even people who are not signed in.
-
-1. api/dicounts
-  * "GET" = Displays the list of the discounts that Wholesale offers
-  * "POST" = add new data into the Database
-    * percentage = percentage of discount`
-    * minQuan = minimum quantity`
-    * maxQuan = maximum quantity`
-    * disShipping = dicount on disShipping`
-
-    Returns the Json object with new data
-  * "PATCH" = edit the existing data
-    * id = id of the discount`
-    * percentage = percentage of discount
-    * minQuan = minimum quantity
-    * maxQuan = maximum quantity
-    * disShipping = dicount on disShipping
-
-    Returns the Json object with updated data
-
-2. api/categories
-  * "GET" = Displays the list of the categories
-  * "POST" = add new Categories into the Database
-    * name = name of the category'
-    * description = description of the category
-    * image = image of the category`
-
-3. api/categories/<category_id>
-  * "GET" = displays specific category with the products in the category
-  * "PATCH" = updates data of specific category
-    * name = name of the category
-    * description = description of the category
-    * image = image of the category`
-  * "DELETE" = delete the category
-
-Following fields need to store in the category table using "POST" before using products and products register page.
-* Pantry & Dry Goods
-* Bath & Facial Tissue
-* Canned Goods
-* Cleaning Products
-* Coffee & Sweeteners
-* Emergency Kits & Supplies
-* Breakroom Serving Supplies
-* Gourmet Foods
-* Paper Towels
-* Snacks
-* Water & Beverages
-
-4. api/products
-  * "GET" = displays the list of the products
-  * "POST" = Adds new product into the Database
-    * name = name of the product`
-    * description = description of the product
-    * image = image
-    * price = price`
-    * category = category name`
-    * max_quantity = max quantity that one order can buy`
-    * min_quantity_retail = min quantity that one retailer should buy`
-    return the new data in the JSON Format
-  * "DELETE" = delete the product from the database
-    * name = name of the product
-
-
-5. api/products/<product_id>
-  * "GET" = displays the product information
-  * "PATCH" = update the product information
-    * name = name of the product
-    * description = description of the product
-    * image = image
-    * price = price
-    * max_quantity = max quantity that one order can buy
-    * min_quantity_retail = min quantity that one retailer should buy
-    returns the updated JSON data
-
-View pages
-1. products/<product_id> (try 26)
-  * Anyone can access this website
-  * Show the product information
-2. products/register
-  * Form that 'admin' users can register the project
-  * Buyers are not authenticated
-
-
-
 # Database
 The database an individual table
 BusinessApplication to store applications for businesses that want to be members of
@@ -144,3 +55,86 @@ a shipping method table. Order table and products table are in a many to many re
 * Patch: If the user is authenticated, the method will take in a new password through a json object and update the user's current password. If successful, a message will show on the accounts page. 
 * Get: Renders the account page.
 * Post: If the user is authenticated, the method will take in a card number and cardholder name through a json object and create a new payment entry into the Payment model. It then updates the customer table with the new payment. A 400 error will occur if the database cannot be accessed and a 403 error will occur if the user is not authenticated
+
+
+
+
+API Endpoints
+
+\` = required
+
+For the "POST", "DELETE", "PATCH" methods, users who are signed as ADMIN have permission.
+For the "GET" method, anyone can call this method even people who are not signed in.
+
+1. api/dicounts
+  * "GET" = Displays the list of the discounts that Wholesale offers
+  * "POST" = add new data into the Database
+    * percentage = percentage of discount`
+    * minQuan = minimum quantity`
+    * maxQuan = maximum quantity`
+    * id = id of the product`
+
+    Returns the Json object with new data
+  * "PATCH" = edit the existing data
+    * id = id of the discount`
+    * percentage = percentage of discount
+    * minQuan = minimum quantity
+    * maxQuan = maximum quantity
+
+    Returns the Json object with updated data
+    
+  * "DELETE" = deleting the existing data
+    * id = id of the product
+
+2. api/categories
+  * "GET" = Displays the list of the categories
+  * "POST" = add new Categories into the Database
+    * name = name of the category`
+    * image = image of the category`
+
+3. api/categories/<category_id>
+  * "GET" = displays specific category with the products in the category
+  * "PATCH" = updates data of specific category
+    * name = name of the category
+    * image = image of the category`
+  * "DELETE" = delete the category
+
+Following fields are stored in the category table as a defualt values.
+* Pantry & Dry Goods
+* Bath & Facial Tissue
+* Canned Goods
+* Cleaning Products
+* Coffee & Sweeteners
+* Emergency Kits & Supplies
+* Breakroom Serving Supplies
+* Gourmet Foods
+* Paper Towels
+* Snacks
+* Water & Beverages
+
+4. api/products
+  * "GET" = displays the list of the products
+  * "POST" = Adds new product into the Database
+    * name = name of the product`
+    * description = description of the product
+    * image = image
+    * price = price`
+    * category = category name`
+    * max_quantity = max quantity that one order can buy`
+    * min_quantity_retail = min quantity that one retailer should buy`
+    return the new data in the JSON Format
+    
+  * "DELETE" = delete the product from the database
+    * name = name of the product
+
+
+5. api/products/<product_id>
+  * "GET" = displays the product information
+  * "PATCH" = update the product information
+    * name = name of the product
+    * description = description of the product
+    * image = image
+    * price = price
+    * max_quantity = max quantity that one order can buy
+    * min_quantity_retail = min quantity that one retailer should buy
+    returns the updated JSON data
