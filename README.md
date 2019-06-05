@@ -43,7 +43,7 @@ a shipping method table. Order table and products table are in a many to many re
 16: order: If user is authenticated, a history of user's orders will be shown
 17. signin: 
 * Get: Returns the signin page
-* Post: Signs the user in
+* Post: Signs the user in given username and password post parameters
 18. signout: Signs out the user
 19. register: 
 * Post: Creates a new user
