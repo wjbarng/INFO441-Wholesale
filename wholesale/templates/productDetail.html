@@ -13,7 +13,9 @@
                 <li>price: ${{ product.price }}</li>
                 <li>category: {{ category.name }} </li>
                 <li>max_quantity: {{ product.max_quantity }} </li>
+                {% if customer == 2 %}
                 <li>min_quantity_retail: {{ product.min_quantity_retail }} </li>
+                {% endif %}
             </ul>
             {% if customer == 2 %}
             <h4>discounts</h4>
@@ -39,11 +41,6 @@
                         </button>
                     </span>
                 </div>
-
-                <!-- <div class="form-group">
-                    <label for="exampleInputPassword1">Password</label>
-                    <input type="password" class="form-control" id="exampleInputPassword1" name="userpassword">
-                </div> -->
 
                 <button type="submit" class="btn btn-primary" >Add to Cart</button>
             </form>

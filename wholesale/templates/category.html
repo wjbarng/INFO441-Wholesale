@@ -9,7 +9,6 @@
         {% for category in categories %}
         <a class="col-4" href="{% url 'products' category_id=category.id %}">
             <div class="card d-inline-block" style="width: 18rem;">
-            <p> {{ category }}</p>
             <img class="card-img-top" src="{% static category.image %}" alt="Pantry & Dry Goods">
             <div class="card-body">
                 <h2 class="card-title">{{ category.name }}</h2>

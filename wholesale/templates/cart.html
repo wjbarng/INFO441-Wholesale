@@ -16,7 +16,7 @@
 {% else %}
 {% for prod in product %}
 <div class="d-flex flex-row justify-content-between">
-    <p> {{ prod.name }} </br> <button onclick="removeFunction( {{ prod.name }} )" id={{ prod.name }} type="button" class="btn btn-link remove">Remove</button></p>
+    <p> {{ prod.name }} </br> <button onclick="removeFunction( '{{ prod.name }}' )" id={{ prod.name }} type="button" class="btn btn-link remove">Remove</button></p>
     <p>${{ prod.price }}</p>
     <p>{{ prod.quantity }}</p>
     <p>${{ prod.price|mul:prod.quantity }}</p>
@@ -36,9 +36,12 @@
         <h3>Shipping</h3>
         {% if ship|length > 0 %}
         {% for value in ship %}
-
+        {% if customer == 2 %}
+        <p>Business name: {{ value.businessName }}</p>
+        {% else %}
         <p>First name: {{ value.shipAddFname }}</p>
         <p>Last name: {{ value.shipAddLname }}</p>
+        {% endif %}
         <p>Address: {{ value.shipAddAddress }}</p>
         <p>City: {{ value.shipAddCity }}</p>
         <p>State: {{ value.shipAddState }}</p>
@@ -99,10 +102,7 @@
 
     var csrftoken = '{{ csrf_token }}';
     function removeFunction( prodName ) {
-        console.log("hihihi")
-        console.log(prodName)
-        console.log(prodName.id)
-        var myData = {'product': prodName.id}
+        var myData = {'product': prodName}
         return fetch('/cart', {
             method: "DELETE",
             credentials: "same-origin",
@@ -113,7 +113,7 @@
             },
             body: JSON.stringify(myData)
             })
-            .then((response) => {console.log("return page")
+            .then(() => {console.log("return page")
             window.location.reload(true)
             }); // parses JSON response into native Javascript objects 
 
