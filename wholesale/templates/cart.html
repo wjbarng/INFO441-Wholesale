@@ -16,7 +16,7 @@
 {% else %}
 {% for prod in product %}
 <div class="d-flex flex-row justify-content-between">
-    <p> {{ prod.name }} </br> <button onclick="removeFunction( {{ prod.name }} )" id={{ prod.name }} type="button" class="btn btn-link remove">Remove</button></p>
+    <p> {{ prod.name }} </br> <button onclick="removeFunction( '{{ prod.name }}' )" id={{ prod.name }} type="button" class="btn btn-link remove">Remove</button></p>
     <p>${{ prod.price }}</p>
     <p>{{ prod.quantity }}</p>
     <p>${{ prod.price|mul:prod.quantity }}</p>
@@ -78,22 +78,24 @@
 </div>
 
 <script>
-    var price = 0;
-    for (var i = 0; i < document.form.optradio.length; i++) {
-        document.form.optradio[i].addEventListener('click', function() {
-            var total = parseFloat(this.value) + parseFloat('{{ total }}')
-            document.getElementById('total').innerHTML = 'Total: $' + total
-        })
-        if (document.form.optradio[i].checked) {
-            price = parseFloat(document.form.optradio[i].value)
+    var form = document.getElementById('two')
+    if (form) {
+        var price = 0;
+        for (var i = 0; i < document.form.optradio.length; i++) {
+            document.form.optradio[i].addEventListener('click', function() {
+                var total = parseFloat(this.value) + parseFloat('{{ total }}')
+                document.getElementById('total').innerHTML = 'Total: $' + total
+            })
+            if (document.form.optradio[i].checked) {
+                price = parseFloat(document.form.optradio[i].value)
+            }
         }
+        var total = parseFloat(price) + parseFloat('{{ total }}')
+        document.getElementById('total').innerHTML = 'Total: $' + total
     }
-    var total = parseFloat(price) + parseFloat('{{ total }}')
-    document.getElementById('total').innerHTML = 'Total: $' + total
-
     var csrftoken = '{{ csrf_token }}';
     function removeFunction( prodName ) {
-        var myData = {'product': prodName.id}
+        var myData = {'product': prodName}
         return fetch('/cart', {
             method: "DELETE",
             credentials: "same-origin",
@@ -104,7 +106,7 @@
             },
             body: JSON.stringify(myData)
             })
-            .then((response) => {console.log("return page")
+            .then(() => {
             window.location.reload(true)
             }); // parses JSON response into native Javascript objects 
 
