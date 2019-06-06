@@ -2,6 +2,8 @@ This is a repository for INFO441 Wholesale Project
 
 Database design: https://www.lucidchart.com/invitations/accept/86a6aaec-9d89-46e2-b6ab-ee0a94e94589
 
+Website: wholesale441.azurewebsites.net
+
 
 # Database
 The database an individual table
@@ -18,9 +20,9 @@ a shipping method table. Order table and products table are in a many to many re
 4. default_shipping: Inserts shipping methods into database if they have not been inserted
 5. products: On get, renders all products for a given category
 6. categories: On get, renders all categories
-7. product_detail:
-8. product_regi:
-9. cart:
+7. product_detail: On get, renders the information of the product. On post, if the user is signed in, adds or updates the quantity of  the products into the cart. if not, redirect to the sigin in page. 
+8. product_regi: On get, renders the product registration form.
+9. cart:On get, shows the list of the products that user added to the cart.
 * Get: Renders the cart page with payment, shipping, items, discount, shipping, and total price shown
 * Post: Takes payment, shipping, customer, item, price, and date information and inserts them into order database to create a new order
 * Delete: Deletes item from cart table and cart page
@@ -47,17 +49,7 @@ a shipping method table. Order table and products table are in a many to many re
 18. signout: Signs out the user
 19. register: 
 * Post: Creates a new user
-* Get: Return the register page
-20. Category_view
-21. Category_detail_view
-22. Discount_view
-23. Product_view
-24. Product_detail_view
-
-
-         
-
-
+* Get: Return the register page       
 
 
 API Endpoints
