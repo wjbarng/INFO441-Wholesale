@@ -25,7 +25,12 @@ SECRET_KEY = '+)^t3chyh=8jz+7hd$w0%sgj+70i9qonalsidrk1ej16)5rd0#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+   "wholesale441.azurewebsites.net",
+   "localhost",
+   "127.0.0.1",
+
+]
 
 
 # Application definition

@@ -1,0 +1,8 @@
+version: '2.1'
+
+services:
+  info441-wholesale:
+    image: wholesale.azurecr.io/wholesale:latest
+    build: .
+    ports:
+      - 8000:8000

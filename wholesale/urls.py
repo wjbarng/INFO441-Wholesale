@@ -4,7 +4,6 @@ from .views import Discount_view, Category_view, Product_view, Product_detail_vi
 #These two added for viewsets
 # from django.conf.urls import include
 from rest_framework.routers import DefaultRouter
-# from .models import Discount_view, Category_view, Product_view, Product_detail_view
 from django.urls import path, include
 from django.contrib import admin
 from . import views
