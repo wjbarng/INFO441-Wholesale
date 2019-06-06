@@ -1,5 +1,4 @@
 from django.db import models
-import datetime
 import sys
 from django.contrib.auth.models import User
 
@@ -27,7 +26,7 @@ class Category(models.Model):
         ('Water & Beverages', 'Water & Beverages'),
     )
     name = models.CharField(default='Pantry & Dry Goods', choices=CATEGORY_CHOICES, max_length=50)
-    image = models.CharField(default="", null=False, max_length=300)
+    image = models.URLField(null=True, max_length=200)
 
 class Products(models.Model):
     name = models.CharField(default="", unique=True, max_length=250)
@@ -43,10 +42,6 @@ class Discount(models.Model):
     minQuan = models.IntegerField(default=0)
     maxQuan = models.IntegerField(default=sys.maxsize)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
-
-# class Prod_dis(models.Model):
-#     products = models.ForeignKey(Products, on_delete=models.CASCADE)
-#     discount = models.ForeignKey(Discount, on_delete=models.CASCADE)
 
 class Customers(models.Model):
     user = models.OneToOneField(User, default = 1, on_delete=models.CASCADE)

@@ -36,9 +36,12 @@
         <h3>Shipping</h3>
         {% if ship|length > 0 %}
         {% for value in ship %}
-
+        {% if customer == 2 %}
+        <p>Business name: {{ value.businessName }}</p>
+        {% else %}
         <p>First name: {{ value.shipAddFname }}</p>
         <p>Last name: {{ value.shipAddLname }}</p>
+        {% endif %}
         <p>Address: {{ value.shipAddAddress }}</p>
         <p>City: {{ value.shipAddCity }}</p>
         <p>State: {{ value.shipAddState }}</p>
@@ -59,6 +62,9 @@
         <p>Add products to cart to make purchase</p>
         {% else %}
         <p>Subtotal: ${{ total }}</p>
+        {% if customer == 2 %}
+        <p>Discount: -${{ discount }}</p>
+        {% endif %}
         <form name='form' action=" {% url 'cart' %}" method="POST">
             <div class="radio">
                 <label><input type="radio" name="optradio" id="two" value='10' checked>2 day delivery: $10</label>
@@ -83,16 +89,17 @@
         var price = 0;
         for (var i = 0; i < document.form.optradio.length; i++) {
             document.form.optradio[i].addEventListener('click', function() {
-                var total = parseFloat(this.value) + parseFloat('{{ total }}')
+                var total = parseFloat(this.value) + parseFloat('{{ total }}') - parseFloat('{{ discount }}') 
                 document.getElementById('total').innerHTML = 'Total: $' + total
             })
             if (document.form.optradio[i].checked) {
                 price = parseFloat(document.form.optradio[i].value)
             }
         }
-        var total = parseFloat(price) + parseFloat('{{ total }}')
+        var total = parseFloat(price) + parseFloat('{{ total }}') - parseFloat('{{ discount }}') 
         document.getElementById('total').innerHTML = 'Total: $' + total
     }
+
     var csrftoken = '{{ csrf_token }}';
     function removeFunction( prodName ) {
         var myData = {'product': prodName}
