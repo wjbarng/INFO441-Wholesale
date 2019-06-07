@@ -24,9 +24,38 @@ DatabaseErrorMessage = "Error interacting with database."
 walmart = 'https://www.walmart.com/tp/peanut-butter'
 page = 'https://www.selfgrowth.com/articles/top-5-advantages-of-buying-wholesale-products-from-online-stores'
 
-""" Scrapes information on product and inserted into Products table """
+
+    
+
 @csrf_exempt
-def web_scraping():
+def homepage(request):
+    if not ShippingMethod.objects.filter(ShipMethName = 'Two day'):
+        one = ShippingMethod(ShipMethName = 'Two day', ShipMethDesc = "two day shipping", ShipMethPrice = 10.0)
+        one.save()
+        two = ShippingMethod(ShipMethName = 'Four day', ShipMethDesc = "Four day shipping", ShipMethPrice = 6.0)
+        two.save()
+        three = ShippingMethod(ShipMethName = 'Seven day', ShipMethDesc = "Seven day shipping", ShipMethPrice = 4.0)
+        three.save()
+
+    categories = {
+    'Pantry & Dry Goods':"https://www.melissaanddoug.com/dw/image/v2/BBDH_PRD/on/demandware.static/-/Sites-master-catalog/default/dwc88006ae/large/004077_1.jpg?sw=562&sh=570&sm=fit",
+    'Bath & Facial Tissue':"https://cdn11.bigcommerce.com/s-l5dryyv/images/stencil/300x300/products/4246/3417/SEV13712CT__52377.1501531543.JPG?c=2",
+    'Canned Goods':"https://www.youngandraw.com/wp-content/uploads/4-Reasons-to-Avoid-Canned-Foods-Save-time-and-Money-too.jpg",
+    'Cleaning Products':"https://i.kinja-img.com/gawker-media/image/upload/s--vatjtWsR--/c_scale,f_auto,fl_progressive,q_80,w_800/sji0ycuofsx5d2lrg828.jpg",
+    'Coffee & Sweeteners':"https://grancolombiatours.com/wp-content/uploads/2017/09/coffee.jpg",
+    'Emergency Kits & Supplies':"http://www.emergencylifeline.com/img/products/K1230_Corporate_Emergency_Kit_10_with_Water_1.jpg",
+    'Breakroom Serving Supplies':"https://i.ebayimg.com/images/g/FBAAAOSwbftcTtcL/s-l300.jpg",
+    'Gourmet Foods':"https://gfwcdn.azureedge.net/images/gfw/mobile/mobile-sausages-grilled-beer.jpg",
+    'Paper Towels':"https://images.homedepot-static.com/productImages/f99f7bfa-57f7-4fc7-aa34-8233cedd1cfc/svn/genuine-joe-paper-towels-gjo22300-64_1000.jpg",
+    'Snacks':"https://images-na.ssl-images-amazon.com/images/I/91We7eLr6FL._SX355SX355_SY337_CR,0,0,355,337_PIbundle-45,TopRight,0,0_SX355_SY337_CR,0,0,355,337_SH20_.jpg",
+    'Water & Beverages':"https://www.seriouseats.com/images/2017/06/20170620-water-bottle-vicky-wasik-group1.jpg"
+    }
+    exist_category = [one['name'] for one in list(Category.objects.all().values())]
+    for category, image in categories.items():
+        if (category not in exist_category):
+            new_category = Category(name=category, image=image)
+            new_category.save()
+    
     page_response = requests.get(walmart, timeout=10)
     page_content = BeautifulSoup(page_response.content, "html.parser")
     productName = page_content.find_all("h2")[0].get_text()
@@ -42,11 +71,26 @@ def web_scraping():
                         max_quantity = 100,
                         min_quantity_retail = 10)
         new_product.save()
-web_scraping()
-    
 
-@csrf_exempt
-def homepage(request):
+    page_bev ="https://www.walmart.com/browse/food/beverages/976759_976782?page=1#searchProductResult"
+    bev_response = requests.get(page_bev, timeout=10, headers={'User-Agent':'Mozilla/5.0'})
+    bev_content = BeautifulSoup(bev_response.content, "html.parser")
+    beverages = bev_content.find("ul", class_="search-result-gridview-items four-items").find_all("li")
+    bev_category = Category.objects.get(name='Water & Beverages')
+    for beverage in beverages:
+        image = beverage.find('img')['src']
+        name = beverage.find('a', class_="product-title-link line-clamp line-clamp-2").find('span').getText()
+        price_el = beverage.find('span', class_="price-group").find_all("span")
+        price = float(price_el[1].getText() + price_el[2].getText() + price_el[3].getText())
+        if not Products.objects.filter(name=name):
+            new_bev = Products(name = name, 
+                            description = "this is "+str(name), 
+                            image=image, price=price, 
+                            category = bev_category,
+                            max_quantity = 200,
+                            min_quantity_retail = 1)
+            new_bev.save()
+
     home_page_response = requests.get(page, timeout=10)
     home_page_content = BeautifulSoup(home_page_response.content, "html.parser")
     page_content = home_page_content.find('div', class_="article-page")
@@ -58,40 +102,8 @@ def homepage(request):
                                           'title4': page_article_body.find_all('p')[8].get_text(), 'content4': page_article_body.find_all('p')[9].get_text(),
                                           'title5': page_article_body.find_all('p')[10].get_text(), 'content5':page_article_body.find_all('p')[11].get_text() })
 
-""" Inserts all categories into Category table if they have not been inserted """
-@csrf_exempt
-def default_category():
-    categories = {
-        'Pantry & Dry Goods':"images/peanut_butter.jpg",
-        'Bath & Facial Tissue':"images/tissue.jpg",
-        'Canned Goods':"images/canned_good.jpeg",
-        'Cleaning Products':"images/dish_detergent.jpg",
-        'Coffee & Sweeteners':"images/coffee.jpg",
-        'Emergency Kits & Supplies':"images/mountain_house.jpg",
-        'Breakroom Serving Supplies':"images/break_room.jpg",
-        'Gourmet Foods':"images/cheese.jpg",
-        'Paper Towels':"images/paper_towel.jpg",
-        'Snacks':"images/snacks.jpg",
-        'Water & Beverages':"images/water.jpg"
-    }
-    exist_category = [one['name'] for one in list(Category.objects.all().values())]
-    for category, image in categories.items():
-        if (category not in exist_category):
-            new_category = Category(name=category, image=image)
-            new_category.save()
-default_category()
 
-""" Inserts all shipping methods into ShippingMethod table if they have not been inserted """
-@csrf_exempt
-def default_shipping():
-    if not ShippingMethod.objects.filter(ShipMethName = 'Two day'):
-        one = ShippingMethod(ShipMethName = 'Two day', ShipMethDesc = "two day shipping", ShipMethPrice = 10.0)
-        one.save()
-        two = ShippingMethod(ShipMethName = 'Four day', ShipMethDesc = "Four day shipping", ShipMethPrice = 6.0)
-        two.save()
-        three = ShippingMethod(ShipMethName = 'Seven day', ShipMethDesc = "Seven day shipping", ShipMethPrice = 4.0)
-        three.save()
-default_shipping()
+
 
 @csrf_exempt
 def products(request, category_id):
@@ -172,7 +184,7 @@ def product_detail(request, product_id, category_id):
                     else:
                         cart_info_values.prodQuantity = new_Quantity
                         cart_info_values.save()
-                        
+                        messages.success(request,('The item is added to your cart'))
                     return HttpResponse(render(request, "productDetail.html", 
                         {'product':product, 'category':category, 'discounts':discounts, 'customer': customerLevel}), status=status.HTTP_200_OK)
                 except:
@@ -319,7 +331,7 @@ def cart(request):
         discount = 0
         for prod in products:
             productPrice = Products.objects.values_list('price', flat = True).get(name = prod.prodName.name)
-            obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity}
+            obj = {'name': prod.prodName.name, 'price': productPrice, 'quantity': prod.prodQuantity, 'total': round(productPrice * prod.prodQuantity, 2)}
             cartList.append(obj)
 
             if customer.custLevel == 2:
@@ -329,6 +341,7 @@ def cart(request):
                     if prod.prodQuantity >= deal.minQuan and prod.prodQuantity <= deal.maxQuan:
                         discount += (productPrice * prod.prodQuantity) * (deal.percentage/100)
             total += productPrice * prod.prodQuantity
+            total = round(total, 2)
             discount = round(discount, 2)
         if request.method == 'GET':
             return render(request, "cart.html", {'ship': address, 'number': number, 'name': name, 'product': cartList, 'total': total, 'customer': customer.custLevel, 'discount': discount}, status=status.HTTP_200_OK)
@@ -465,8 +478,6 @@ def payment(request):
                 payment = Payment.objects.create(CardNumber = number, Name = name)
                 payment.save()
                 paymentid = Customers.objects.values_list('PaymentID', flat = True).filter(id = request.user.id)
-                if paymentid.exists():
-                    Payment.objects.filter(id = paymentid).delete()
             except DatabaseError:
                 return HttpResponse(DatabaseErrorMessage, status=status.HTTP_400_BAD_REQUEST)
             """ Update customer table with new payment """
@@ -560,7 +571,7 @@ def Category_view(request):
     elif (request.method == "POST"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -600,7 +611,7 @@ def Category_detail_view(request, category_id):
     elif (request.method == "PATCH"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
@@ -621,15 +632,15 @@ def Category_detail_view(request, category_id):
         try:
             # update the data
             category_info_values.save()
-            updated_category_info = list(category_info.values())
-            return JsonResponse(updated_category_info, safe=False, status = status.HTTP_201_CREATED, 
+            new_category_info_values = list(Category.objects.all().values().filter(id = category_id))
+            return JsonResponse(new_category_info_values, safe=False, status = status.HTTP_201_CREATED, 
                                         content_type = 'application/json')
         except:
             return HttpResponse('Update failed', status=status.HTTP_400_BAD_REQUEST)
     elif (request.method == "DELETE"):
         try:
             if (not request.user.is_authenticated or 
-                Customers.objects.get(user_id = request.user.id).custLevel != 1):
+                Customers.objects.get(user_id = request.user.id).custLevel != 3):
                 return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)
         except:
             return HttpResponse('you are not authorized', status=status.HTTP_403_FORBIDDEN)

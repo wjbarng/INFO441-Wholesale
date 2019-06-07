@@ -19,7 +19,7 @@
     <p> {{ prod.name }} </br> <button onclick="removeFunction( '{{ prod.name }}' )" id={{ prod.name }} type="button" class="btn btn-link remove">Remove</button></p>
     <p>${{ prod.price }}</p>
     <p>{{ prod.quantity }}</p>
-    <p>${{ prod.price|mul:prod.quantity }}</p>
+    <p>${{ prod.total }}</p>
 </div>
 <hr>
 {% endfor %}
